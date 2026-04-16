@@ -31,7 +31,6 @@ export default function Index() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Category pills */}
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none">
           {CATEGORIES.map((cat) => (
             <button
@@ -48,7 +47,6 @@ export default function Index() {
           ))}
         </div>
 
-        {/* Posts */}
         <div className="space-y-3">
           {isLoading && Array.from({ length: 5 }).map((_, i) => <PostSkeleton key={i} />)}
 
@@ -73,6 +71,7 @@ export default function Index() {
               upvotes={post.upvotes}
               downvotes={post.downvotes}
               commentCount={post.comment_count}
+              viewCount={post.view_count}
               createdAt={post.created_at}
               anonymousId={post.anonymous_id}
               index={i}

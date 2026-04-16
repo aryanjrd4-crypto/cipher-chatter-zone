@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Ghost, Plus, Settings } from 'lucide-react';
+import { Ghost, Plus, Settings, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Header() {
@@ -18,7 +18,12 @@ export function Header() {
           <span className="text-lg font-semibold text-gradient">Echo</span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/analytics">
+              <BarChart3 className="h-4 w-4" />
+            </Link>
+          </Button>
           <Button variant="ghost" size="icon" asChild>
             <Link to="/settings">
               <Settings className="h-4 w-4" />

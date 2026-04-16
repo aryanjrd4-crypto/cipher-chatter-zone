@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MessageCircle, Share2, ArrowBigUp, ArrowBigDown, Clock } from 'lucide-react';
+import { MessageCircle, Share2, ArrowBigUp, ArrowBigDown, Clock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIdentityStore } from '@/stores/useIdentityStore';
 import { useVote } from '@/hooks/useVote';
+import { useShareTracking } from '@/hooks/useShareTracking';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from '@/lib/time';
 
@@ -15,6 +16,7 @@ interface PostCardProps {
   upvotes: number;
   downvotes: number;
   commentCount: number;
+  viewCount?: number;
   createdAt: string;
   anonymousId: string;
   index?: number;
@@ -22,11 +24,12 @@ interface PostCardProps {
 
 export function PostCard({
   id, title, content, category, upvotes, downvotes,
-  commentCount, createdAt, anonymousId, index = 0,
+  commentCount, viewCount = 0, createdAt, anonymousId, index = 0,
 }: PostCardProps) {
   const myId = useIdentityStore((s) => s.anonymousId);
   const isOwn = myId === anonymousId;
   const { userVote, handleVote } = useVote({ postId: id });
+  const { trackShare } = useShareTracking();
   const score = upvotes - downvotes;
 
   const handleShare = async () => {
@@ -37,6 +40,7 @@ export function PostCard({
       await navigator.clipboard.writeText(url);
       toast.success('Link copied to clipboard');
     }
+    trackShare(id);
   };
 
   return (
@@ -55,6 +59,10 @@ export function PostCard({
           )}
           <Clock className="h-3 w-3" />
           <span>{formatDistanceToNow(createdAt)}</span>
+          <div className="flex items-center gap-1 ml-auto">
+            <Eye className="h-3 w-3" />
+            <span>{viewCount}</span>
+          </div>
           {isOwn && (
             <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-medium">
               You
