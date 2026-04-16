@@ -14,7 +14,135 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      comments: {
+        Row: {
+          anonymous_id: string
+          content: string
+          created_at: string
+          downvotes: number
+          id: string
+          parent_id: string | null
+          post_id: string
+          upvotes: number
+        }
+        Insert: {
+          anonymous_id: string
+          content: string
+          created_at?: string
+          downvotes?: number
+          id?: string
+          parent_id?: string | null
+          post_id: string
+          upvotes?: number
+        }
+        Update: {
+          anonymous_id?: string
+          content?: string
+          created_at?: string
+          downvotes?: number
+          id?: string
+          parent_id?: string | null
+          post_id?: string
+          upvotes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          anonymous_id: string
+          category: string | null
+          comment_count: number
+          content: string | null
+          created_at: string
+          downvotes: number
+          id: string
+          title: string
+          updated_at: string
+          upvotes: number
+        }
+        Insert: {
+          anonymous_id: string
+          category?: string | null
+          comment_count?: number
+          content?: string | null
+          created_at?: string
+          downvotes?: number
+          id?: string
+          title: string
+          updated_at?: string
+          upvotes?: number
+        }
+        Update: {
+          anonymous_id?: string
+          category?: string | null
+          comment_count?: number
+          content?: string | null
+          created_at?: string
+          downvotes?: number
+          id?: string
+          title?: string
+          updated_at?: string
+          upvotes?: number
+        }
+        Relationships: []
+      }
+      votes: {
+        Row: {
+          anonymous_id: string
+          comment_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          vote_type: number
+        }
+        Insert: {
+          anonymous_id: string
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          vote_type: number
+        }
+        Update: {
+          anonymous_id?: string
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          vote_type?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
