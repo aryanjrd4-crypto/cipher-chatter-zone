@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { v4 as uuidv4 } from 'crypto';
 
 function generateId(): string {
   return crypto.randomUUID();

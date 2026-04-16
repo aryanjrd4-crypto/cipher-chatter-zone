@@ -26,10 +26,10 @@ export function useVote({ postId, commentId }: UseVoteOptions) {
   }, [anonymousId, postId, commentId]);
 
   const handleVote = async (voteType: 1 | -1) => {
-    const table = postId ? 'posts' : 'comments';
     const targetId = postId || commentId;
     if (!targetId) return;
 
+    const isPost = !!postId;
     const isSameVote = userVote === voteType;
     
     if (userVote !== 0) {
@@ -39,11 +39,23 @@ export function useVote({ postId, commentId }: UseVoteOptions) {
       if (commentId) deleteQuery = deleteQuery.eq('comment_id', commentId);
       await deleteQuery;
 
-      // Decrement the old vote
-      const oldField = userVote === 1 ? 'upvotes' : 'downvotes';
-      const { data: current } = await supabase.from(table).select(oldField).eq('id', targetId).single();
-      if (current) {
-        await supabase.from(table).update({ [oldField]: Math.max(0, (current as any)[oldField] - 1) }).eq('id', targetId);
+      // Decrement the old vote count
+      if (isPost) {
+        const { data: current } = await supabase.from('posts').select('upvotes, downvotes').eq('id', targetId).single();
+        if (current) {
+          const update = userVote === 1
+            ? { upvotes: Math.max(0, current.upvotes - 1) }
+            : { downvotes: Math.max(0, current.downvotes - 1) };
+          await supabase.from('posts').update(update).eq('id', targetId);
+        }
+      } else {
+        const { data: current } = await supabase.from('comments').select('upvotes, downvotes').eq('id', targetId).single();
+        if (current) {
+          const update = userVote === 1
+            ? { upvotes: Math.max(0, current.upvotes - 1) }
+            : { downvotes: Math.max(0, current.downvotes - 1) };
+          await supabase.from('comments').update(update).eq('id', targetId);
+        }
       }
     }
 
@@ -51,21 +63,35 @@ export function useVote({ postId, commentId }: UseVoteOptions) {
       setUserVote(0);
     } else {
       // Insert new vote
-      const voteData: any = { anonymous_id: anonymousId, vote_type: voteType };
+      const voteData: Record<string, unknown> = { anonymous_id: anonymousId, vote_type: voteType };
       if (postId) voteData.post_id = postId;
       if (commentId) voteData.comment_id = commentId;
-      await supabase.from('votes').insert(voteData);
+      await supabase.from('votes').insert(voteData as any);
 
-      const newField = voteType === 1 ? 'upvotes' : 'downvotes';
-      const { data: current } = await supabase.from(table).select(newField).eq('id', targetId).single();
-      if (current) {
-        await supabase.from(table).update({ [newField]: (current as any)[newField] + 1 }).eq('id', targetId);
+      // Increment new vote count
+      if (isPost) {
+        const { data: current } = await supabase.from('posts').select('upvotes, downvotes').eq('id', targetId).single();
+        if (current) {
+          const update = voteType === 1
+            ? { upvotes: current.upvotes + 1 }
+            : { downvotes: current.downvotes + 1 };
+          await supabase.from('posts').update(update).eq('id', targetId);
+        }
+      } else {
+        const { data: current } = await supabase.from('comments').select('upvotes, downvotes').eq('id', targetId).single();
+        if (current) {
+          const update = voteType === 1
+            ? { upvotes: current.upvotes + 1 }
+            : { downvotes: current.downvotes + 1 };
+          await supabase.from('comments').update(update).eq('id', targetId);
+        }
       }
       setUserVote(voteType);
     }
 
     queryClient.invalidateQueries({ queryKey: ['posts'] });
     queryClient.invalidateQueries({ queryKey: ['post', postId] });
+    queryClient.invalidateQueries({ queryKey: ['comments', postId] });
   };
 
   return { userVote, handleVote };
