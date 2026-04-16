@@ -2,8 +2,12 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MessageCircle, Share2, ArrowBigUp, ArrowBigDown, Clock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AnonAvatar } from '@/components/chat/AnonAvatar';
+import { ReactionPicker } from '@/components/reactions/ReactionPicker';
+import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { useIdentityStore } from '@/stores/useIdentityStore';
 import { useVote } from '@/hooks/useVote';
+import { useReactions } from '@/hooks/useReactions';
 import { useShareTracking } from '@/hooks/useShareTracking';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from '@/lib/time';
@@ -29,6 +33,7 @@ export function PostCard({
   const myId = useIdentityStore((s) => s.anonymousId);
   const isOwn = myId === anonymousId;
   const { userVote, handleVote } = useVote({ postId: id });
+  const { reactionCounts, toggleReaction } = useReactions({ postId: id });
   const { trackShare } = useShareTracking();
   const score = upvotes - downvotes;
 
@@ -38,7 +43,7 @@ export function PostCard({
       await navigator.share({ title, url });
     } else {
       await navigator.clipboard.writeText(url);
-      toast.success('Link copied to clipboard');
+      toast.success('Link copied');
     }
     trackShare(id);
   };
@@ -47,69 +52,59 @@ export function PostCard({
     <motion.article
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-      className="glass glass-hover rounded-xl p-4 group"
+      transition={{ delay: index * 0.04, duration: 0.3 }}
+      className="glass glass-hover rounded-2xl p-5 group"
     >
-      <Link to={`/post/${id}`} className="block space-y-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <Link to={`/post/${id}`} className="block space-y-3">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <AnonAvatar id={anonymousId} size={24} />
           {category && (
-            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium text-[10px] uppercase tracking-wider">
               {category}
             </span>
           )}
-          <Clock className="h-3 w-3" />
-          <span>{formatDistanceToNow(createdAt)}</span>
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>{formatDistanceToNow(createdAt)}</span>
+          </div>
           <div className="flex items-center gap-1 ml-auto">
             <Eye className="h-3 w-3" />
             <span>{viewCount}</span>
           </div>
           {isOwn && (
-            <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-medium">
-              You
-            </span>
+            <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-medium">You</span>
           )}
         </div>
         <h2 className="text-base font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">
           {title}
         </h2>
         {content && (
-          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-            {content}
-          </p>
+          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">{content}</p>
         )}
       </Link>
 
-      <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border/50">
+      <ReactionBar reactions={reactionCounts} onToggle={toggleReaction} />
+
+      <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border/30">
         <div className="flex items-center gap-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 ${userVote === 1 ? 'text-primary' : 'text-muted-foreground'}`}
-            onClick={() => handleVote(1)}
-          >
+          <Button variant="ghost" size="icon" className={`h-8 w-8 ${userVote === 1 ? 'text-primary glow-sm' : 'text-muted-foreground'}`} onClick={() => handleVote(1)}>
             <ArrowBigUp className="h-5 w-5" />
           </Button>
-          <span className={`text-sm font-medium min-w-[2ch] text-center ${score > 0 ? 'text-primary' : score < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-            {score}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 ${userVote === -1 ? 'text-destructive' : 'text-muted-foreground'}`}
-            onClick={() => handleVote(-1)}
-          >
+          <span className={`text-sm font-medium min-w-[2ch] text-center ${score > 0 ? 'text-primary' : score < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>{score}</span>
+          <Button variant="ghost" size="icon" className={`h-8 w-8 ${userVote === -1 ? 'text-destructive' : 'text-muted-foreground'}`} onClick={() => handleVote(-1)}>
             <ArrowBigDown className="h-5 w-5" />
           </Button>
         </div>
 
-        <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 ml-2" asChild>
+        <ReactionPicker onSelect={toggleReaction} />
+
+        <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 ml-1" asChild>
           <Link to={`/post/${id}`}>
-            <MessageCircle className="h-4 w-4" />
-            <span>{commentCount}</span>
+            <MessageCircle className="h-4 w-4" /> <span>{commentCount}</span>
           </Link>
         </Button>
 
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground ml-auto" onClick={handleShare}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground ml-auto hover:text-primary" onClick={handleShare}>
           <Share2 className="h-4 w-4" />
         </Button>
       </div>

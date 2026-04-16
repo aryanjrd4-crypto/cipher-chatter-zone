@@ -9,9 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { CommentItem } from '@/components/comments/CommentItem';
 import { PostSkeleton } from '@/components/posts/PostSkeleton';
 import { PostAnalytics } from '@/components/posts/PostAnalytics';
+import { AnonAvatar } from '@/components/chat/AnonAvatar';
+import { ReactionPicker } from '@/components/reactions/ReactionPicker';
+import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { supabase } from '@/integrations/supabase/client';
 import { useIdentityStore } from '@/stores/useIdentityStore';
 import { useVote } from '@/hooks/useVote';
+import { useReactions } from '@/hooks/useReactions';
 import { useViewTracking } from '@/hooks/useViewTracking';
 import { useShareTracking } from '@/hooks/useShareTracking';
 import { formatDistanceToNow } from '@/lib/time';
@@ -56,11 +60,7 @@ export default function PostDetail() {
   const { data: comments = [], isLoading: commentsLoading } = useQuery({
     queryKey: ['comments', id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('comments')
-        .select('*')
-        .eq('post_id', id!)
-        .order('created_at', { ascending: true });
+      const { data, error } = await supabase.from('comments').select('*').eq('post_id', id!).order('created_at', { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -68,15 +68,11 @@ export default function PostDetail() {
   });
 
   const { userVote, handleVote } = useVote({ postId: id });
+  const { reactionCounts, toggleReaction } = useReactions({ postId: id });
 
   const addComment = async (parentId: string | null, content: string) => {
     setSubmitting(true);
-    const { error } = await supabase.from('comments').insert({
-      post_id: id!,
-      parent_id: parentId,
-      anonymous_id: anonymousId,
-      content,
-    });
+    const { error } = await supabase.from('comments').insert({ post_id: id!, parent_id: parentId, anonymous_id: anonymousId, content });
     if (!error) {
       await supabase.from('posts').update({ comment_count: (post?.comment_count || 0) + 1 }).eq('id', id!);
       queryClient.invalidateQueries({ queryKey: ['comments', id] });
@@ -125,10 +121,11 @@ export default function PostDetail() {
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
 
-        <article className="glass rounded-xl p-5 space-y-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <article className="glass rounded-2xl p-6 space-y-4">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <AnonAvatar id={post.anonymous_id} size={28} />
             {post.category && (
-              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{post.category}</span>
+              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium text-[10px] uppercase tracking-wider">{post.category}</span>
             )}
             <Clock className="h-3 w-3" />
             <span>{formatDistanceToNow(post.created_at)}</span>
@@ -139,21 +136,24 @@ export default function PostDetail() {
             {isOwn && <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-medium">You</span>}
           </div>
 
-          <h1 className="text-lg font-semibold text-foreground">{post.title}</h1>
+          <h1 className="text-xl font-bold text-foreground leading-tight">{post.title}</h1>
           {post.content && <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{post.content}</p>}
 
-          <div className="flex items-center gap-1 pt-2 border-t border-border/50">
-            <Button variant="ghost" size="icon" className={`h-8 w-8 ${userVote === 1 ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => handleVote(1)}>
+          <ReactionBar reactions={reactionCounts} onToggle={toggleReaction} />
+
+          <div className="flex items-center gap-1 pt-3 border-t border-border/30">
+            <Button variant="ghost" size="icon" className={`h-8 w-8 ${userVote === 1 ? 'text-primary glow-sm' : 'text-muted-foreground'}`} onClick={() => handleVote(1)}>
               <ArrowBigUp className="h-5 w-5" />
             </Button>
             <span className={`text-sm font-medium ${score > 0 ? 'text-primary' : score < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>{score}</span>
             <Button variant="ghost" size="icon" className={`h-8 w-8 ${userVote === -1 ? 'text-destructive' : 'text-muted-foreground'}`} onClick={() => handleVote(-1)}>
               <ArrowBigDown className="h-5 w-5" />
             </Button>
+            <ReactionPicker onSelect={toggleReaction} />
             <div className="flex items-center gap-1 ml-3 text-muted-foreground text-sm">
               <MessageCircle className="h-4 w-4" /> {post.comment_count}
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground ml-auto" onClick={handleShare}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground ml-auto hover:text-primary" onClick={handleShare}>
               <Share2 className="h-4 w-4" />
             </Button>
             {isOwn && (
@@ -164,49 +164,23 @@ export default function PostDetail() {
           </div>
         </article>
 
-        {/* Analytics - visible only to post creator */}
-        {isOwn && (
-          <PostAnalytics
-            postId={post.id}
-            upvotes={post.upvotes}
-            downvotes={post.downvotes}
-            commentCount={post.comment_count}
-          />
-        )}
+        {isOwn && <PostAnalytics postId={post.id} upvotes={post.upvotes} downvotes={post.downvotes} commentCount={post.comment_count} />}
 
-        {/* Add comment */}
         <div className="space-y-3">
-          <h2 className="text-sm font-medium text-foreground">Comments</h2>
+          <h2 className="text-sm font-semibold text-foreground">Comments</h2>
           <div className="space-y-2">
-            <Textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a comment..."
-              className="min-h-[80px] bg-secondary/50 border-border/50 text-sm"
-            />
-            <Button
-              size="sm"
-              disabled={!commentText.trim() || submitting}
-              onClick={() => addComment(null, commentText.trim())}
-            >
+            <Textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="min-h-[80px] bg-secondary/50 border-border/50 text-sm rounded-xl" />
+            <Button size="sm" disabled={!commentText.trim() || submitting} onClick={() => addComment(null, commentText.trim())}>
               Comment
             </Button>
           </div>
         </div>
 
-        {/* Comments list */}
         <div className="space-y-1">
           {commentsLoading && <p className="text-sm text-muted-foreground">Loading comments...</p>}
-          {!commentsLoading && nested.length === 0 && (
-            <p className="text-sm text-muted-foreground py-4 text-center">No comments yet</p>
-          )}
+          {!commentsLoading && nested.length === 0 && <p className="text-sm text-muted-foreground py-4 text-center">No comments yet</p>}
           {nested.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              onReply={(parentId, content) => addComment(parentId, content)}
-              onDelete={deleteComment}
-            />
+            <CommentItem key={comment.id} comment={comment} onReply={(parentId, content) => addComment(parentId, content)} onDelete={deleteComment} />
           ))}
         </div>
       </motion.div>

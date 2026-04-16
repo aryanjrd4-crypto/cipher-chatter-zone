@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          anonymous_id: string
+          content: string
+          created_at: string
+          has_effect: string | null
+          id: string
+          parent_id: string | null
+          room_id: string
+        }
+        Insert: {
+          anonymous_id: string
+          content: string
+          created_at?: string
+          has_effect?: string | null
+          id?: string
+          parent_id?: string | null
+          room_id: string
+        }
+        Update: {
+          anonymous_id?: string
+          content?: string
+          created_at?: string
+          has_effect?: string | null
+          id?: string
+          parent_id?: string | null
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           anonymous_id: string
@@ -164,6 +233,48 @@ export type Database = {
           view_count?: number
         }
         Relationships: []
+      }
+      reactions: {
+        Row: {
+          anonymous_id: string
+          comment_id: string | null
+          created_at: string
+          emoji: string
+          id: string
+          post_id: string | null
+        }
+        Insert: {
+          anonymous_id: string
+          comment_id?: string | null
+          created_at?: string
+          emoji: string
+          id?: string
+          post_id?: string | null
+        }
+        Update: {
+          anonymous_id?: string
+          comment_id?: string | null
+          created_at?: string
+          emoji?: string
+          id?: string
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       votes: {
         Row: {

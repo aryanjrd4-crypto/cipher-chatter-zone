@@ -3,8 +3,12 @@ import { motion } from 'framer-motion';
 import { ArrowBigUp, ArrowBigDown, Reply, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { AnonAvatar } from '@/components/chat/AnonAvatar';
+import { ReactionPicker } from '@/components/reactions/ReactionPicker';
+import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { useIdentityStore } from '@/stores/useIdentityStore';
 import { useVote } from '@/hooks/useVote';
+import { useReactions } from '@/hooks/useReactions';
 import { formatDistanceToNow } from '@/lib/time';
 
 interface Comment {
@@ -31,6 +35,7 @@ export function CommentItem({ comment, onReply, onDelete, depth = 0 }: CommentIt
   const myId = useIdentityStore((s) => s.anonymousId);
   const isOwn = myId === comment.anonymous_id;
   const { userVote, handleVote } = useVote({ commentId: comment.id });
+  const { reactionCounts, toggleReaction } = useReactions({ commentId: comment.id });
   const score = comment.upvotes - comment.downvotes;
 
   const submitReply = () => {
@@ -41,39 +46,30 @@ export function CommentItem({ comment, onReply, onDelete, depth = 0 }: CommentIt
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className={`${depth > 0 ? 'ml-4 pl-4 border-l border-border/40' : ''}`}
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`${depth > 0 ? 'ml-4 pl-4 border-l border-primary/10' : ''}`}>
       <div className="py-3 space-y-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <AnonAvatar id={comment.anonymous_id} size={20} />
           <span>{formatDistanceToNow(comment.created_at)}</span>
           {isOwn && (
-            <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-medium">
-              You
-            </span>
+            <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-medium">You</span>
           )}
         </div>
         <p className="text-sm text-foreground/90 leading-relaxed">{comment.content}</p>
+        
+        <ReactionBar reactions={reactionCounts} onToggle={toggleReaction} />
+        
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost" size="icon"
-            className={`h-7 w-7 ${userVote === 1 ? 'text-primary' : 'text-muted-foreground'}`}
-            onClick={() => handleVote(1)}
-          >
+          <Button variant="ghost" size="icon" className={`h-7 w-7 ${userVote === 1 ? 'text-primary' : 'text-muted-foreground'}`} onClick={() => handleVote(1)}>
             <ArrowBigUp className="h-4 w-4" />
           </Button>
           <span className="text-xs font-medium min-w-[2ch] text-center text-muted-foreground">{score}</span>
-          <Button
-            variant="ghost" size="icon"
-            className={`h-7 w-7 ${userVote === -1 ? 'text-destructive' : 'text-muted-foreground'}`}
-            onClick={() => handleVote(-1)}
-          >
+          <Button variant="ghost" size="icon" className={`h-7 w-7 ${userVote === -1 ? 'text-destructive' : 'text-muted-foreground'}`} onClick={() => handleVote(-1)}>
             <ArrowBigDown className="h-4 w-4" />
           </Button>
+          <ReactionPicker onSelect={toggleReaction} />
           {depth < 3 && (
-            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 ml-2" onClick={() => setReplying(!replying)}>
+            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 ml-1" onClick={() => setReplying(!replying)}>
               <Reply className="h-3 w-3" /> Reply
             </Button>
           )}

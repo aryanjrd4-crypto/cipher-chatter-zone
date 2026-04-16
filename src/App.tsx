@@ -8,6 +8,7 @@ import PostDetail from "./pages/PostDetail";
 import SettingsPage from "./pages/SettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
