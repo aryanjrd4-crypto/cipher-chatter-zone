@@ -62,6 +62,64 @@ export type Database = {
           },
         ]
       }
+      post_shares: {
+        Row: {
+          anonymous_id: string
+          id: string
+          post_id: string
+          shared_at: string
+        }
+        Insert: {
+          anonymous_id: string
+          id?: string
+          post_id: string
+          shared_at?: string
+        }
+        Update: {
+          anonymous_id?: string
+          id?: string
+          post_id?: string
+          shared_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_shares_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_views: {
+        Row: {
+          anonymous_id: string
+          id: string
+          post_id: string
+          viewed_at: string
+        }
+        Insert: {
+          anonymous_id: string
+          id?: string
+          post_id: string
+          viewed_at?: string
+        }
+        Update: {
+          anonymous_id?: string
+          id?: string
+          post_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_views_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           anonymous_id: string
@@ -71,9 +129,11 @@ export type Database = {
           created_at: string
           downvotes: number
           id: string
+          share_count: number
           title: string
           updated_at: string
           upvotes: number
+          view_count: number
         }
         Insert: {
           anonymous_id: string
@@ -83,9 +143,11 @@ export type Database = {
           created_at?: string
           downvotes?: number
           id?: string
+          share_count?: number
           title: string
           updated_at?: string
           upvotes?: number
+          view_count?: number
         }
         Update: {
           anonymous_id?: string
@@ -95,9 +157,11 @@ export type Database = {
           created_at?: string
           downvotes?: number
           id?: string
+          share_count?: number
           title?: string
           updated_at?: string
           upvotes?: number
+          view_count?: number
         }
         Relationships: []
       }

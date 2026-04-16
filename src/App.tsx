@@ -6,6 +6,8 @@ import Index from "./pages/Index";
 import CreatePost from "./pages/CreatePost";
 import PostDetail from "./pages/PostDetail";
 import SettingsPage from "./pages/SettingsPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +22,8 @@ const App = () => (
           <Route path="/create" element={<CreatePost />} />
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

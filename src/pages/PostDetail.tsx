@@ -2,15 +2,18 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowBigUp, ArrowBigDown, MessageCircle, Share2, Trash2, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowBigUp, ArrowBigDown, MessageCircle, Share2, Trash2, Clock, Eye } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { CommentItem } from '@/components/comments/CommentItem';
 import { PostSkeleton } from '@/components/posts/PostSkeleton';
+import { PostAnalytics } from '@/components/posts/PostAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { useIdentityStore } from '@/stores/useIdentityStore';
 import { useVote } from '@/hooks/useVote';
+import { useViewTracking } from '@/hooks/useViewTracking';
+import { useShareTracking } from '@/hooks/useShareTracking';
 import { formatDistanceToNow } from '@/lib/time';
 import { toast } from 'sonner';
 
@@ -36,6 +39,9 @@ export default function PostDetail() {
   const anonymousId = useIdentityStore((s) => s.anonymousId);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useViewTracking(id);
+  const { trackShare } = useShareTracking();
 
   const { data: post, isLoading: postLoading } = useQuery({
     queryKey: ['post', id],
@@ -102,6 +108,7 @@ export default function PostDetail() {
       await navigator.clipboard.writeText(url);
       toast.success('Link copied');
     }
+    if (id) trackShare(id);
   };
 
   if (postLoading) return <Layout><PostSkeleton /></Layout>;
@@ -125,6 +132,10 @@ export default function PostDetail() {
             )}
             <Clock className="h-3 w-3" />
             <span>{formatDistanceToNow(post.created_at)}</span>
+            <div className="flex items-center gap-1 ml-auto">
+              <Eye className="h-3 w-3" />
+              <span>{post.view_count} viewed</span>
+            </div>
             {isOwn && <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-medium">You</span>}
           </div>
 
@@ -152,6 +163,16 @@ export default function PostDetail() {
             )}
           </div>
         </article>
+
+        {/* Analytics - visible only to post creator */}
+        {isOwn && (
+          <PostAnalytics
+            postId={post.id}
+            upvotes={post.upvotes}
+            downvotes={post.downvotes}
+            commentCount={post.comment_count}
+          />
+        )}
 
         {/* Add comment */}
         <div className="space-y-3">
