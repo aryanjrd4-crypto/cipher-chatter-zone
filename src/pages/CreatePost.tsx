@@ -9,7 +9,7 @@ import { useIdentityStore } from '@/stores/useIdentityStore';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, Lock } from 'lucide-react';
 
 const CATEGORIES = ['general', 'thoughts', 'questions', 'stories', 'rants'];
 
@@ -25,7 +25,6 @@ export default function CreatePost() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-
     setLoading(true);
     const { error } = await supabase.from('posts').insert({
       anonymous_id: anonymousId,
@@ -33,7 +32,6 @@ export default function CreatePost() {
       content: content.trim() || null,
       category,
     });
-
     if (error) {
       toast.error('Failed to create post');
     } else {
@@ -52,21 +50,24 @@ export default function CreatePost() {
         </button>
 
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Create Echo</h1>
-          <p className="text-sm text-muted-foreground mt-1">Share your thoughts anonymously</p>
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Lock className="h-5 w-5 text-primary" />
+            Create Cipher Post
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">Your identity is encrypted. Share freely.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="flex gap-2 flex-wrap">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setCategory(cat)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                   category === cat
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                    ? 'bg-primary/15 text-primary border border-primary/25'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-transparent'
                 }`}
               >
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -74,24 +75,12 @@ export default function CreatePost() {
             ))}
           </div>
 
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
-            className="bg-secondary/50 border-border/50 text-base"
-            maxLength={300}
-          />
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="bg-secondary/50 border-border/50 text-base rounded-xl" maxLength={300} />
+          <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="What's on your mind? (optional)" className="min-h-[150px] bg-secondary/50 border-border/50 text-sm leading-relaxed resize-none rounded-xl" />
 
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What's on your mind? (optional)"
-            className="min-h-[150px] bg-secondary/50 border-border/50 text-sm leading-relaxed resize-none"
-          />
-
-          <Button type="submit" disabled={!title.trim() || loading} className="w-full gap-2">
+          <Button type="submit" disabled={!title.trim() || loading} className="w-full gap-2 bg-primary/90 hover:bg-primary shadow-[0_0_20px_hsl(190,95%,55%,0.15)]">
             <Send className="h-4 w-4" />
-            {loading ? 'Posting...' : 'Post Anonymously'}
+            {loading ? 'Encrypting...' : 'Post Anonymously'}
           </Button>
         </form>
       </motion.div>
