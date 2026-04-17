@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           has_effect: string | null
           id: string
+          image_url: string | null
           parent_id: string | null
           room_id: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           has_effect?: string | null
           id?: string
+          image_url?: string | null
           parent_id?: string | null
           room_id: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           created_at?: string
           has_effect?: string | null
           id?: string
+          image_url?: string | null
           parent_id?: string | null
           room_id?: string
         }
@@ -130,6 +133,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      message_reads: {
+        Row: {
+          anonymous_id: string
+          id: string
+          message_id: string
+          read_at: string
+        }
+        Insert: {
+          anonymous_id: string
+          id?: string
+          message_id: string
+          read_at?: string
+        }
+        Update: {
+          anonymous_id?: string
+          id?: string
+          message_id?: string
+          read_at?: string
+        }
+        Relationships: []
       }
       post_shares: {
         Row: {
@@ -275,6 +299,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      room_presence: {
+        Row: {
+          anonymous_id: string
+          id: string
+          is_typing: boolean
+          last_seen: string
+          room_id: string
+        }
+        Insert: {
+          anonymous_id: string
+          id?: string
+          is_typing?: boolean
+          last_seen?: string
+          room_id: string
+        }
+        Update: {
+          anonymous_id?: string
+          id?: string
+          is_typing?: boolean
+          last_seen?: string
+          room_id?: string
+        }
+        Relationships: []
       }
       votes: {
         Row: {
