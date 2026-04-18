@@ -48,6 +48,19 @@ export function useReactions({ postId, commentId }: UseReactionsOptions) {
       if (postId) data.post_id = postId;
       if (commentId) data.comment_id = commentId;
       await supabase.from('reactions').insert(data as any);
+
+      if (postId) {
+        const { data: postRow } = await supabase.from('posts').select('anonymous_id').eq('id', postId).maybeSingle();
+        if (postRow && postRow.anonymous_id !== anonymousId) {
+          await supabase.from('notifications').insert({
+            anonymous_id: postRow.anonymous_id,
+            type: 'reaction',
+            post_id: postId,
+            actor_anonymous_id: anonymousId,
+            payload: { emoji },
+          });
+        }
+      }
     }
     queryClient.invalidateQueries({ queryKey: key });
   };

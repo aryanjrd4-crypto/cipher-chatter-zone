@@ -9,6 +9,7 @@ import SettingsPage from "./pages/SettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import ChatPage from "./pages/ChatPage";
+import ActivityPage from "./pages/ActivityPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/activity" element={<ActivityPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

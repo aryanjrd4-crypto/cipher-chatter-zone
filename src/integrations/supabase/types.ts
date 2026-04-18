@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookmarks: {
+        Row: {
+          anonymous_id: string
+          created_at: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          anonymous_id: string
+          created_at?: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          anonymous_id?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           anonymous_id: string
@@ -155,6 +184,57 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          actor_anonymous_id: string | null
+          anonymous_id: string
+          comment_id: string | null
+          created_at: string
+          id: string
+          payload: Json | null
+          post_id: string | null
+          read: boolean
+          type: string
+        }
+        Insert: {
+          actor_anonymous_id?: string | null
+          anonymous_id: string
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          post_id?: string | null
+          read?: boolean
+          type: string
+        }
+        Update: {
+          actor_anonymous_id?: string | null
+          anonymous_id?: string
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          post_id?: string | null
+          read?: boolean
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_shares: {
         Row: {
           anonymous_id: string
@@ -293,6 +373,51 @@ export type Database = {
           },
           {
             foreignKeyName: "reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          anonymous_id: string
+          comment_id: string | null
+          created_at: string
+          details: string | null
+          id: string
+          post_id: string | null
+          reason: string
+        }
+        Insert: {
+          anonymous_id: string
+          comment_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          post_id?: string | null
+          reason: string
+        }
+        Update: {
+          anonymous_id?: string
+          comment_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          post_id?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"

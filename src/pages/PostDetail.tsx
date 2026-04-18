@@ -75,6 +75,15 @@ export default function PostDetail() {
     const { error } = await supabase.from('comments').insert({ post_id: id!, parent_id: parentId, anonymous_id: anonymousId, content });
     if (!error) {
       await supabase.from('posts').update({ comment_count: (post?.comment_count || 0) + 1 }).eq('id', id!);
+      if (post && post.anonymous_id !== anonymousId) {
+        await supabase.from('notifications').insert({
+          anonymous_id: post.anonymous_id,
+          type: 'reply',
+          post_id: id!,
+          actor_anonymous_id: anonymousId,
+          payload: { snippet: content.slice(0, 80) },
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['comments', id] });
       queryClient.invalidateQueries({ queryKey: ['post', id] });
       setCommentText('');
