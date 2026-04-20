@@ -6,7 +6,7 @@
 //   - LIVEKIT_URL          (wss://your-project.livekit.cloud)
 //   - LIVEKIT_API_KEY      (API key from LiveKit Cloud → Settings → Keys)
 //   - LIVEKIT_API_SECRET   (the matching secret)
-import { AccessToken } from "https://esm.sh/livekit-server-sdk@2.7.2?target=deno";
+import { AccessToken } from "npm:livekit-server-sdk@2.7.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
