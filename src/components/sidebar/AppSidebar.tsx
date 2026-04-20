@@ -148,6 +148,27 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
           <kbd className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-background/30 font-mono">N</kbd>
         </Button>
 
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            onClick={() => { navigate('/voice'); handleNav(); }}
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-[11px] border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
+          >
+            <Mic className="h-3 w-3" />
+            Voice
+          </Button>
+          <Button
+            onClick={() => { navigate('/video'); handleNav(); }}
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-[11px] border-accent/20 bg-accent/5 hover:bg-accent/10 text-accent hover:text-accent"
+          >
+            <Video className="h-3 w-3" />
+            Video
+          </Button>
+        </div>
+
         <form onSubmit={handleSearch} className="relative">
           <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
