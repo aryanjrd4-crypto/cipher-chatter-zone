@@ -48,6 +48,8 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   const [openCats, setOpenCats] = useState(true);
   const [openActivity, setOpenActivity] = useState(true);
   const [openRooms, setOpenRooms] = useState(true);
+  const [openVoice, setOpenVoice] = useState(true);
+  const [openVideo, setOpenVideo] = useState(true);
   const { anonymousId, resetIdentity } = useIdentityStore();
 
   const { data: rooms = [] } = useQuery({
