@@ -91,7 +91,7 @@ export function RoomCallScreen({ kind }: { kind: Kind }) {
         serverUrl={tokenData.url}
         connect
         audio
-        video={isVideo && room.camera_required}
+        video={isVideo && (('camera_required' in room) ? Boolean((room as any).camera_required) : false)}
         data-lk-theme="default"
         className="h-full w-full"
         onDisconnected={leave}
