@@ -10,6 +10,10 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import ChatPage from "./pages/ChatPage";
 import ActivityPage from "./pages/ActivityPage";
+import VoiceRoomsPage from "./pages/VoiceRoomsPage";
+import VideoRoomsPage from "./pages/VideoRoomsPage";
+import VoiceCallPage from "./pages/VoiceCallPage";
+import VideoCallPage from "./pages/VideoCallPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +32,10 @@ const App = () => (
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/activity" element={<ActivityPage />} />
+          <Route path="/voice" element={<VoiceRoomsPage />} />
+          <Route path="/voice/:id" element={<VoiceCallPage />} />
+          <Route path="/video" element={<VideoRoomsPage />} />
+          <Route path="/video/:id" element={<VideoCallPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
