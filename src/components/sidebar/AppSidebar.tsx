@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import {
   Lock, Plus, Search, Home, Flame, Clock, Hash, ChevronDown, MessageSquare,
   Bookmark, Heart, FileText, Settings, RefreshCw, BarChart3, LogOut, Sparkles, Users,
+  Mic, Video,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
