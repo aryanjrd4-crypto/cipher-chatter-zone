@@ -514,8 +514,8 @@ function ParticipantTile({
         speaking ? 'border-primary shadow-[0_0_24px_hsl(190,95%,55%,0.45)]' : 'border-border/30',
         pinned && 'ring-2 ring-accent ring-offset-2 ring-offset-background',
       )}>
-        {hasVideo ? (
-          <VideoTrack trackRef={track} className="w-full h-full object-cover" />
+        {hasVideo && track.publication ? (
+          <VideoTrack trackRef={track as any} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary/30 to-background">
             <CipherAvatar id={p.identity} size={large ? 160 : 80} pulse={speaking} />
