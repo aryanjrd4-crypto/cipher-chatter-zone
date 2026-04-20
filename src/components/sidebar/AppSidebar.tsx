@@ -263,7 +263,83 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Activity */}
+        {/* Voice Rooms */}
+        <Collapsible open={openVoice} onOpenChange={setOpenVoice}>
+          <CollapsibleTrigger className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors">
+            <span className="flex items-center gap-2">
+              <Mic className="h-3 w-3 text-primary/80" />
+              Voice Rooms
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_hsl(190,95%,55%)]" />
+            </span>
+            <ChevronDown className={`h-3 w-3 transition-transform ${openVoice ? '' : '-rotate-90'}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-0.5 mt-1">
+            {voiceRooms.length === 0 && (
+              <p className="px-3 py-2 text-xs text-muted-foreground/60">No live voice rooms</p>
+            )}
+            {voiceRooms.map((r) => (
+              <Link
+                key={r.id}
+                to={`/voice/${r.id}`}
+                onClick={handleNav}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-all group"
+              >
+                <Mic className="h-4 w-4 shrink-0 text-muted-foreground/60 group-hover:text-primary" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{r.name}</p>
+                  <p className="text-[10px] text-muted-foreground/70">up to {r.max_participants}</p>
+                </div>
+              </Link>
+            ))}
+            <Link
+              to="/voice"
+              onClick={handleNav}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-primary hover:bg-primary/10 transition-all"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              All voice rooms
+            </Link>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Video Rooms */}
+        <Collapsible open={openVideo} onOpenChange={setOpenVideo}>
+          <CollapsibleTrigger className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors">
+            <span className="flex items-center gap-2">
+              <Video className="h-3 w-3 text-accent/80" />
+              Video Rooms
+              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse shadow-[0_0_8px_hsl(270,80%,65%)]" />
+            </span>
+            <ChevronDown className={`h-3 w-3 transition-transform ${openVideo ? '' : '-rotate-90'}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-0.5 mt-1">
+            {videoRooms.length === 0 && (
+              <p className="px-3 py-2 text-xs text-muted-foreground/60">No live video rooms</p>
+            )}
+            {videoRooms.map((r) => (
+              <Link
+                key={r.id}
+                to={`/video/${r.id}`}
+                onClick={handleNav}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent/5 transition-all group"
+              >
+                <Video className="h-4 w-4 shrink-0 text-muted-foreground/60 group-hover:text-accent" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{r.name}</p>
+                  <p className="text-[10px] text-muted-foreground/70">up to {r.max_participants}</p>
+                </div>
+              </Link>
+            ))}
+            <Link
+              to="/video"
+              onClick={handleNav}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-accent hover:bg-accent/10 transition-all"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              All video rooms
+            </Link>
+          </CollapsibleContent>
+        </Collapsible>
         <Collapsible open={openActivity} onOpenChange={setOpenActivity}>
           <CollapsibleTrigger className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors">
             <span>Your Activity</span>
