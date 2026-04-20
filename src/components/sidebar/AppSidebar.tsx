@@ -82,6 +82,34 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
     refetchInterval: 15_000,
   });
 
+  const { data: voiceRooms = [] } = useQuery({
+    queryKey: ['voice-rooms-sidebar'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('voice_rooms')
+        .select('id, name, max_participants')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    refetchInterval: 30_000,
+  });
+
+  const { data: videoRooms = [] } = useQuery({
+    queryKey: ['video-rooms-sidebar'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('video_rooms')
+        .select('id, name, max_participants')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    refetchInterval: 30_000,
+  });
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (search.trim()) {
