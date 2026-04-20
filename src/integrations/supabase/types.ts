@@ -449,6 +449,81 @@ export type Database = {
         }
         Relationships: []
       }
+      video_rooms: {
+        Row: {
+          camera_required: boolean
+          category: string | null
+          created_at: string
+          description: string | null
+          host_anonymous_id: string
+          id: string
+          is_active: boolean
+          is_public: boolean
+          max_participants: number
+          name: string
+        }
+        Insert: {
+          camera_required?: boolean
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          host_anonymous_id: string
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          max_participants?: number
+          name: string
+        }
+        Update: {
+          camera_required?: boolean
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          host_anonymous_id?: string
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          max_participants?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      voice_rooms: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          host_anonymous_id: string
+          id: string
+          is_active: boolean
+          is_public: boolean
+          max_participants: number
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          host_anonymous_id: string
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          max_participants?: number
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          host_anonymous_id?: string
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          max_participants?: number
+          name?: string
+        }
+        Relationships: []
+      }
       votes: {
         Row: {
           anonymous_id: string
