@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import {
   Lock, Plus, Search, Home, Flame, Clock, Hash, ChevronDown, MessageSquare,
   Bookmark, Heart, FileText, Settings, RefreshCw, BarChart3, LogOut, Sparkles, Users,
-  Mic, Video,
+  Mic, Video, ShieldCheck,
 } from 'lucide-react';
+import { AdminLoginDialog } from '@/components/admin/AdminLoginDialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -386,7 +387,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         </Collapsible>
       </div>
 
-      {/* Bottom: identity + settings */}
+      {/* Bottom: identity + settings + admin */}
       <div className="border-t border-border/40 p-3 space-y-2">
         <div className="flex items-center gap-3 px-2 py-1.5">
           <AnonAvatar id={anonymousId} size={32} />
@@ -423,6 +424,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
             <LogOut className="h-3.5 w-3.5" />
           </Button>
         </div>
+        <AdminSidebarButton onNavigate={handleNav} />
       </div>
     </aside>
   );
