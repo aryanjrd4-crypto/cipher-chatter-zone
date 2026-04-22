@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_actions: {
+        Row: {
+          action_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_room_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_room_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_room_id?: string | null
+        }
+        Relationships: []
+      }
       bookmarks: {
         Row: {
           anonymous_id: string
@@ -457,10 +481,13 @@ export type Database = {
           description: string | null
           host_anonymous_id: string
           id: string
+          invite_code: string | null
           is_active: boolean
+          is_locked: boolean
           is_public: boolean
           max_participants: number
           name: string
+          room_type: string
         }
         Insert: {
           camera_required?: boolean
@@ -469,10 +496,13 @@ export type Database = {
           description?: string | null
           host_anonymous_id: string
           id?: string
+          invite_code?: string | null
           is_active?: boolean
+          is_locked?: boolean
           is_public?: boolean
           max_participants?: number
           name: string
+          room_type?: string
         }
         Update: {
           camera_required?: boolean
@@ -481,10 +511,13 @@ export type Database = {
           description?: string | null
           host_anonymous_id?: string
           id?: string
+          invite_code?: string | null
           is_active?: boolean
+          is_locked?: boolean
           is_public?: boolean
           max_participants?: number
           name?: string
+          room_type?: string
         }
         Relationships: []
       }
