@@ -467,3 +467,40 @@ function SidebarItem({
     </Link>
   );
 }
+
+function AdminSidebarButton({ onNavigate }: { onNavigate?: () => void }) {
+  const [loginOpen, setLoginOpen] = useState(false);
+  const navigate = useNavigate();
+  const isAdmin = sessionStorage.getItem('cipher_admin') === 'true';
+
+  if (isAdmin) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-full justify-start gap-2 text-xs h-8 text-primary/60 hover:text-primary"
+        onClick={() => { navigate('/admin'); onNavigate?.(); }}
+      >
+        <ShieldCheck className="h-3.5 w-3.5" />
+        Admin Dashboard
+      </Button>
+    );
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setLoginOpen(true)}
+        className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+      >
+        <ShieldCheck className="h-3 w-3" />
+        Cipher Admin
+      </button>
+      <AdminLoginDialog
+        open={loginOpen}
+        onOpenChange={setLoginOpen}
+        onLogin={() => { navigate('/admin'); onNavigate?.(); }}
+      />
+    </>
+  );
+}
