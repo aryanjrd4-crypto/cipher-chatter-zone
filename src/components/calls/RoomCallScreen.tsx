@@ -16,26 +16,28 @@ import {
 import { Track, ConnectionState, RoomEvent } from 'livekit-client';
 import {
   Mic, MicOff, Video, VideoOff, ScreenShare, Hand, Phone, Smile,
-  MessageSquare, Users, X, Pin, Grid3x3, User, Loader2, ShieldCheck,
+  MessageSquare, Users, X, Pin, Grid3x3, User, Loader2, ShieldCheck, Crown,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { CipherAvatar } from '@/components/calls/CipherAvatar';
+import { CipherCodeModal } from '@/components/calls/CipherCodeModal';
+import { HostPanel } from '@/components/calls/HostPanel';
 import { useIdentityStore } from '@/stores/useIdentityStore';
 import { useLiveKitToken } from '@/hooks/useLiveKitToken';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 type Kind = 'voice' | 'video';
 
 interface ChatMsg {
   id: string;
-  from: string; // identity
+  from: string;
   text: string;
   ts: number;
 }
@@ -52,7 +54,9 @@ export function RoomCallScreen({ kind }: { kind: Kind }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { anonymousId } = useIdentityStore();
+  const queryClient = useQueryClient();
   const isVideo = kind === 'video';
+  const [codeVerified, setCodeVerified] = useState(false);
 
   const { data: room, isLoading: roomLoading } = useQuery({
     queryKey: [kind, 'room', id],
@@ -66,19 +70,48 @@ export function RoomCallScreen({ kind }: { kind: Kind }) {
     enabled: !!id,
   });
 
+  // Check if this user is the host (bypass code)
+  const isHost = room && id ? sessionStorage.getItem(`cipher_host_${id}`) === anonymousId || (room as any).host_anonymous_id === anonymousId : false;
+
+  // Determine if code is needed
+  const needsCode = isVideo && room && (room as any).room_type !== 'confession' && (room as any).invite_code && !isHost && !codeVerified;
+
   const lkRoomName = id ? `${kind}-${id}` : null;
   const { data: tokenData, error: tokenError, loading: tokenLoading } =
-    useLiveKitToken({ room: lkRoomName, identity: anonymousId, enabled: !!room });
+    useLiveKitToken({ room: lkRoomName, identity: anonymousId, enabled: !!room && !needsCode });
 
   const leave = () => navigate(isVideo ? '/video' : '/voice');
 
   if (!id) return null;
 
-  if (roomLoading || tokenLoading) {
+  if (roomLoading) {
     return <FullscreenStatus icon={<Loader2 className="h-6 w-6 animate-spin text-primary" />} title="Connecting to the cipher" subtitle="Securing anonymous channel..." />;
   }
   if (!room) {
     return <FullscreenStatus title="Room not found" subtitle="This cipher line has gone dark." onBack={leave} />;
+  }
+
+  // Show cipher code modal for coded rooms
+  if (needsCode) {
+    return (
+      <CipherCodeModal
+        open
+        roomName={(room as any).name}
+        onSubmit={async (code) => {
+          const match = code.toUpperCase() === ((room as any).invite_code || '').toUpperCase();
+          if (match) {
+            setCodeVerified(true);
+            return true;
+          }
+          return false;
+        }}
+        onCancel={leave}
+      />
+    );
+  }
+
+  if (tokenLoading) {
+    return <FullscreenStatus icon={<Loader2 className="h-6 w-6 animate-spin text-primary" />} title="Connecting to the cipher" subtitle="Securing anonymous channel..." />;
   }
   if (tokenError || !tokenData) {
     return <FullscreenStatus title="Couldn't open the line" subtitle={tokenError || 'No token returned.'} onBack={leave} />;
@@ -98,7 +131,7 @@ export function RoomCallScreen({ kind }: { kind: Kind }) {
         onError={(e) => toast.error(e.message)}
       >
         <RoomAudioRenderer />
-        <CallShell kind={kind} roomMeta={room} onLeave={leave} />
+        <CallShell kind={kind} roomMeta={room as any} onLeave={leave} isHost={isHost} />
       </LiveKitRoom>
     </div>
   );
@@ -123,18 +156,18 @@ function FullscreenStatus({
   );
 }
 
-// ============================================================
-// In-call shell (after LiveKit connects)
-// ============================================================
-
 interface RoomMeta {
   id: string;
   name: string;
   description: string | null;
   max_participants: number;
+  room_type?: string;
+  invite_code?: string | null;
+  is_locked?: boolean;
+  host_anonymous_id?: string;
 }
 
-function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta; onLeave: () => void }) {
+function CallShell({ kind, roomMeta, onLeave, isHost }: { kind: Kind; roomMeta: RoomMeta; onLeave: () => void; isHost: boolean }) {
   const isVideo = kind === 'video';
   const lkRoom = useRoomContext();
   const participants = useParticipants();
@@ -143,6 +176,7 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
   const [pinned, setPinned] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(false);
+  const [hostPanelOpen, setHostPanelOpen] = useState(false);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [handRaised, setHandRaised] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -150,27 +184,35 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
   const [chat, setChat] = useState<ChatMsg[]>([]);
   const [unread, setUnread] = useState(0);
 
-  // Call timer
+  // Live room data for host panel
+  const { data: liveRoom } = useQuery({
+    queryKey: ['live-room-meta', roomMeta.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('video_rooms').select('*').eq('id', roomMeta.id).maybeSingle();
+      return data;
+    },
+    refetchInterval: 5000,
+    enabled: isHost,
+  });
+
   useEffect(() => {
     const start = Date.now();
     const t = setInterval(() => setDuration(Math.floor((Date.now() - start) / 1000)), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Join/leave toasts
   useEffect(() => {
     if (!lkRoom) return;
     const onJoin = (p: any) => toast(`${shortName(p.identity)} joined the cipher`, { duration: 2200 });
-    const onLeave = (p: any) => toast(`${shortName(p.identity)} left`, { duration: 2200 });
+    const onLeaveEvt = (p: any) => toast(`${shortName(p.identity)} left`, { duration: 2200 });
     lkRoom.on(RoomEvent.ParticipantConnected, onJoin);
-    lkRoom.on(RoomEvent.ParticipantDisconnected, onLeave);
+    lkRoom.on(RoomEvent.ParticipantDisconnected, onLeaveEvt);
     return () => {
       lkRoom.off(RoomEvent.ParticipantConnected, onJoin);
-      lkRoom.off(RoomEvent.ParticipantDisconnected, onLeave);
+      lkRoom.off(RoomEvent.ParticipantDisconnected, onLeaveEvt);
     };
   }, [lkRoom]);
 
-  // Data channel: chat + reactions + hand-raise
   const { send } = useDataChannel((msg) => {
     try {
       const text = new TextDecoder().decode(msg.payload);
@@ -207,7 +249,6 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
     setTimeout(() => setFloatingReactions((rs) => rs.filter((x) => x.id !== r.id)), 3000);
   };
 
-  // Open chat → clear unread
   useEffect(() => { if (chatOpen) setUnread(0); }, [chatOpen]);
 
   const camOn = !!localParticipant?.isCameraEnabled;
@@ -232,9 +273,10 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
     broadcast({ kind: 'reaction', emoji: next ? '✋' : '👇' });
   };
 
+  const isCodeProtected = isVideo && roomMeta.room_type !== 'confession' && roomMeta.invite_code;
+
   return (
     <div className="h-full w-full flex flex-col bg-gradient-to-b from-background via-background to-background/95 relative overflow-hidden">
-      {/* mesh glow background */}
       <div className="pointer-events-none absolute inset-0 opacity-40 bg-mesh" />
 
       {/* Top bar */}
@@ -250,7 +292,14 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
             {isVideo ? <Video className="h-4 w-4 text-accent" /> : <Mic className="h-4 w-4 text-primary" />}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold truncate">{roomMeta.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold truncate">{roomMeta.name}</p>
+              {isCodeProtected && (
+                <Badge variant="outline" className="text-[8px] border-primary/30 text-primary gap-0.5 py-0 h-4">
+                  <ShieldCheck className="h-2 w-2" /> Secured
+                </Badge>
+              )}
+            </div>
             <p className="text-[10px] text-muted-foreground flex items-center gap-2 font-mono">
               <span className="flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -265,6 +314,17 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
         </div>
 
         <div className="hidden sm:flex items-center gap-1.5">
+          {isHost && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-xs gap-1.5 text-yellow-400 hover:bg-yellow-400/10"
+              onClick={() => setHostPanelOpen(true)}
+            >
+              <Crown className="h-3.5 w-3.5 drop-shadow-[0_0_6px_rgba(250,204,21,0.6)]" />
+              Host
+            </Button>
+          )}
           {isVideo && (
             <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1.5" onClick={() => setView(v => v === 'grid' ? 'speaker' : 'grid')}>
               {view === 'grid' ? <Grid3x3 className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
@@ -294,8 +354,6 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
         ) : (
           <VoiceStage />
         )}
-
-        {/* Floating reactions */}
         <FloatingReactions reactions={floatingReactions} />
       </main>
 
@@ -348,6 +406,12 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
             <Hand className="h-4 w-4" />
           </ControlButton>
 
+          {isHost && (
+            <ControlButton onClick={() => setHostPanelOpen(true)} label="Host controls">
+              <Crown className="h-4 w-4 text-yellow-400" />
+            </ControlButton>
+          )}
+
           <Button
             onClick={onLeave}
             className="h-11 px-4 sm:px-5 rounded-full bg-destructive/90 hover:bg-destructive text-destructive-foreground gap-2 shadow-[0_0_24px_hsl(0,72%,51%,0.4)]"
@@ -357,8 +421,12 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
           </Button>
         </div>
 
-        {/* mobile-only secondary row */}
         <div className="flex sm:hidden items-center justify-center gap-3 mt-2">
+          {isHost && (
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] gap-1 text-yellow-400" onClick={() => setHostPanelOpen(true)}>
+              <Crown className="h-3 w-3" /> Host
+            </Button>
+          )}
           <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] gap-1 relative" onClick={() => setChatOpen(true)}>
             <MessageSquare className="h-3 w-3" /> Chat
             {unread > 0 && <span className="ml-1 h-3.5 min-w-[14px] px-1 rounded-full bg-accent text-[9px] text-accent-foreground flex items-center justify-center">{unread}</span>}
@@ -393,6 +461,31 @@ function CallShell({ kind, roomMeta, onLeave }: { kind: Kind; roomMeta: RoomMeta
           <ParticipantList />
         </SheetContent>
       </Sheet>
+
+      {/* Host Panel */}
+      {isHost && (
+        <HostPanel
+          open={hostPanelOpen}
+          onOpenChange={setHostPanelOpen}
+          roomId={roomMeta.id}
+          roomType={liveRoom?.room_type ?? roomMeta.room_type ?? 'standard'}
+          inviteCode={liveRoom?.invite_code ?? roomMeta.invite_code ?? null}
+          isLocked={liveRoom?.is_locked ?? roomMeta.is_locked ?? false}
+          participants={participants.map((p) => ({
+            identity: p.identity,
+            isMicrophoneEnabled: p.isMicrophoneEnabled,
+            isCameraEnabled: p.isCameraEnabled,
+            isLocal: p.isLocal,
+            isSpeaking: p.isSpeaking,
+          }))}
+          onKickParticipant={(identity) => {
+            // Kick via data channel message
+            broadcast({ kind: 'kick', target: identity });
+            toast.success(`Removed ${shortName(identity)}`);
+          }}
+          onEndCall={onLeave}
+        />
+      )}
     </div>
   );
 }
@@ -414,7 +507,6 @@ function VideoStage({ view, pinned, setPinned }: {
     { onlySubscribed: false },
   );
 
-  // Active speaker = pinned or first speaker
   const activeIdentity = pinned ?? tracks.find((t) => t.participant.isSpeaking)?.participant.identity ?? tracks[0]?.participant.identity;
 
   if (view === 'speaker' && activeIdentity) {
@@ -438,7 +530,6 @@ function VideoStage({ view, pinned, setPinned }: {
     );
   }
 
-  // Grid view
   const cols = tracks.length <= 1 ? 'grid-cols-1'
     : tracks.length === 2 ? 'grid-cols-1 sm:grid-cols-2'
     : tracks.length <= 4 ? 'grid-cols-2'
@@ -491,7 +582,7 @@ function VoiceStage() {
 }
 
 // ============================================================
-// Tile (one participant)
+// Tile
 // ============================================================
 
 function ParticipantTile({
@@ -522,7 +613,6 @@ function ParticipantTile({
           </div>
         )}
 
-        {/* Top-left badges */}
         <div className="absolute top-2 left-2 flex items-center gap-1.5">
           {isScreen && (
             <span className="px-1.5 py-0.5 rounded-md bg-accent/80 text-[9px] text-accent-foreground font-medium uppercase tracking-wider">
@@ -536,7 +626,6 @@ function ParticipantTile({
           )}
         </div>
 
-        {/* Pin */}
         {onPin && !isScreen && (
           <button
             onClick={onPin}
@@ -547,7 +636,6 @@ function ParticipantTile({
           </button>
         )}
 
-        {/* Bottom info */}
         <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between gap-2">
           <span className="text-[11px] font-mono text-white/90 truncate">{shortName(p.identity)}</span>
           {!p.isMicrophoneEnabled && (
@@ -639,7 +727,7 @@ function FloatingReactions({ reactions }: { reactions: Reaction[] }) {
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <AnimatePresence>
         {reactions.map((r) => {
-          const left = 20 + Math.random() * 60; // %
+          const left = 20 + Math.random() * 60;
           return (
             <motion.div
               key={r.id}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Mic, Sparkles } from 'lucide-react';
+import { Camera, Mic, Sparkles, Copy, Check, ShieldCheck } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -26,20 +26,39 @@ const SUGGESTED_NAMES = {
   video: ['Visual Cipher', 'Anonymous Lens', 'Pixelated Truths', 'Cipher Camera'],
 };
 
+const VIDEO_ROOM_TYPES = [
+  { value: 'confession', label: '🔓 Confession Room', desc: 'Open join — no code needed' },
+  { value: 'deep-talks', label: '🧠 Deep Talks', desc: 'Code-protected' },
+  { value: 'advice', label: '💡 Advice', desc: 'Code-protected' },
+  { value: 'cyber-meetup', label: '🤝 Cyber Meetup', desc: 'Code-protected' },
+  { value: 'standard', label: '🔒 Standard', desc: 'Code-protected' },
+];
+
+function generateInviteCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
 export function CreateRoomDialog({ kind, open, onOpenChange }: Props) {
   const navigate = useNavigate();
   const { anonymousId } = useIdentityStore();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('general');
+  const [roomType, setRoomType] = useState('standard');
   const [maxParticipants, setMaxParticipants] = useState(kind === 'voice' ? 8 : 6);
   const [isPublic, setIsPublic] = useState(true);
   const [cameraRequired, setCameraRequired] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const isVideo = kind === 'video';
   const Icon = isVideo ? Camera : Mic;
   const accent = isVideo ? 'accent' : 'primary';
+  const isConfession = roomType === 'confession';
 
   const submit = async () => {
     if (!name.trim()) {
@@ -49,6 +68,7 @@ export function CreateRoomDialog({ kind, open, onOpenChange }: Props) {
     setSubmitting(true);
     try {
       const table = isVideo ? 'video_rooms' : 'voice_rooms';
+      const inviteCode = isVideo && !isConfession ? generateInviteCode() : null;
       const payload: any = {
         name: name.trim().slice(0, 80),
         description: description.trim().slice(0, 200) || null,
@@ -57,14 +77,32 @@ export function CreateRoomDialog({ kind, open, onOpenChange }: Props) {
         host_anonymous_id: anonymousId,
         is_public: isPublic,
       };
-      if (isVideo) payload.camera_required = cameraRequired;
+      if (isVideo) {
+        payload.camera_required = cameraRequired;
+        payload.room_type = roomType;
+        payload.invite_code = inviteCode;
+      }
 
       const { data, error } = await supabase.from(table).insert(payload).select('id').single();
       if (error) throw error;
 
-      toast.success(`${isVideo ? 'Video' : 'Voice'} room created`);
-      onOpenChange(false);
-      navigate(`/${isVideo ? 'video' : 'voice'}/${data.id}`);
+      if (inviteCode) {
+        // Show the code to host before navigating
+        setGeneratedCode(inviteCode);
+        // Store in sessionStorage so the host can bypass the code modal
+        sessionStorage.setItem(`cipher_host_${data.id}`, anonymousId);
+        // Navigate after a brief moment so host can see code
+        setTimeout(() => {
+          onOpenChange(false);
+          setGeneratedCode(null);
+          navigate(`/${isVideo ? 'video' : 'voice'}/${data.id}`);
+        }, 100);
+      } else {
+        toast.success(`${isVideo ? 'Video' : 'Voice'} room created`);
+        if (isVideo) sessionStorage.setItem(`cipher_host_${data.id}`, anonymousId);
+        onOpenChange(false);
+        navigate(`/${isVideo ? 'video' : 'voice'}/${data.id}`);
+      }
     } catch (e) {
       console.error(e);
       toast.error('Failed to create room');
@@ -72,6 +110,41 @@ export function CreateRoomDialog({ kind, open, onOpenChange }: Props) {
       setSubmitting(false);
     }
   };
+
+  const copyCode = () => {
+    if (!generatedCode) return;
+    navigator.clipboard.writeText(generatedCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast.success('Code copied — share it secretly');
+  };
+
+  // If code was generated, show it
+  if (generatedCode) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="glass-strong max-w-sm">
+          <div className="flex flex-col items-center text-center py-4 space-y-4">
+            <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center shadow-[0_0_30px_hsl(190,95%,55%,0.3)]">
+              <ShieldCheck className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold">Your Cipher Code</h3>
+              <p className="text-xs text-muted-foreground mt-1">Share this code with people you want to invite. Only they can join.</p>
+            </div>
+            <div className="bg-secondary/60 rounded-xl px-6 py-4 w-full">
+              <p className="text-2xl font-mono font-bold tracking-[0.4em] text-primary">{generatedCode}</p>
+            </div>
+            <Button onClick={copyCode} variant="outline" className="gap-2">
+              {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Copied!' : 'Copy Code'}
+            </Button>
+            <p className="text-[10px] text-muted-foreground">Entering room automatically...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,6 +184,33 @@ export function CreateRoomDialog({ kind, open, onOpenChange }: Props) {
               className="bg-secondary/40 resize-none"
             />
           </div>
+
+          {isVideo && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Room Type</Label>
+              <Select value={roomType} onValueChange={setRoomType}>
+                <SelectTrigger className="bg-secondary/40 h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VIDEO_ROOM_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      <span className="flex items-center gap-2">
+                        {t.label}
+                        <span className="text-[10px] text-muted-foreground">— {t.desc}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!isConfession && (
+                <p className="text-[10px] text-primary/80 flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3" />
+                  An 8-char cipher code will be auto-generated for this room
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
