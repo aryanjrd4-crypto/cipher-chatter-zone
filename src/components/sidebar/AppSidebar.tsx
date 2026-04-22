@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import {
   Lock, Plus, Search, Home, Flame, Clock, Hash, ChevronDown, MessageSquare,
   Bookmark, Heart, FileText, Settings, RefreshCw, BarChart3, LogOut, Sparkles, Users,
-  Mic, Video,
+  Mic, Video, ShieldCheck,
 } from 'lucide-react';
+import { AdminLoginDialog } from '@/components/admin/AdminLoginDialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -386,7 +387,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         </Collapsible>
       </div>
 
-      {/* Bottom: identity + settings */}
+      {/* Bottom: identity + settings + admin */}
       <div className="border-t border-border/40 p-3 space-y-2">
         <div className="flex items-center gap-3 px-2 py-1.5">
           <AnonAvatar id={anonymousId} size={32} />
@@ -423,6 +424,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
             <LogOut className="h-3.5 w-3.5" />
           </Button>
         </div>
+        <AdminSidebarButton onNavigate={handleNav} />
       </div>
     </aside>
   );
@@ -463,5 +465,42 @@ function SidebarItem({
       </span>
       <span className="text-xs font-medium">{label}</span>
     </Link>
+  );
+}
+
+function AdminSidebarButton({ onNavigate }: { onNavigate?: () => void }) {
+  const [loginOpen, setLoginOpen] = useState(false);
+  const navigate = useNavigate();
+  const isAdmin = sessionStorage.getItem('cipher_admin') === 'true';
+
+  if (isAdmin) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-full justify-start gap-2 text-xs h-8 text-primary/60 hover:text-primary"
+        onClick={() => { navigate('/admin'); onNavigate?.(); }}
+      >
+        <ShieldCheck className="h-3.5 w-3.5" />
+        Admin Dashboard
+      </Button>
+    );
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setLoginOpen(true)}
+        className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+      >
+        <ShieldCheck className="h-3 w-3" />
+        Cipher Admin
+      </button>
+      <AdminLoginDialog
+        open={loginOpen}
+        onOpenChange={setLoginOpen}
+        onLogin={() => { navigate('/admin'); onNavigate?.(); }}
+      />
+    </>
   );
 }

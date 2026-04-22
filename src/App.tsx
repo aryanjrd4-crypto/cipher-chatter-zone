@@ -14,6 +14,7 @@ import VoiceRoomsPage from "./pages/VoiceRoomsPage";
 import VideoRoomsPage from "./pages/VideoRoomsPage";
 import VoiceCallPage from "./pages/VoiceCallPage";
 import VideoCallPage from "./pages/VideoCallPage";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/voice/:id" element={<VoiceCallPage />} />
           <Route path="/video" element={<VideoRoomsPage />} />
           <Route path="/video/:id" element={<VideoCallPage />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
