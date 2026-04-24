@@ -143,8 +143,9 @@ export function PostCard({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      </motion.article>
+          </div>
+        </motion.article>
+      </Tilt3D>
 
       <ReportDialog open={reportOpen} onOpenChange={setReportOpen} postId={id} />
     </>
