@@ -448,22 +448,22 @@ function SidebarItem({
     <Link
       to={to}
       onClick={onClick}
-      className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all relative ${
+      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-300 relative will-change-transform hover:translate-x-0.5 active:scale-[0.98] ${
         active
-          ? 'bg-primary/10 text-primary'
-          : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+          ? 'bg-primary/10 text-primary shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)]'
+          : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
       }`}
     >
       {active && (
         <motion.span
           layoutId="sidebar-active"
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-r bg-primary shadow-[0_0_8px_hsl(190,95%,55%)]"
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-r bg-primary shadow-[0_0_10px_hsl(187,100%,50%)]"
         />
       )}
-      <span className={active ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground'}>
+      <span className={active ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground transition-colors'}>
         {icon}
       </span>
-      <span className="text-xs font-medium">{label}</span>
+      <span className="text-xs font-medium tracking-tight">{label}</span>
     </Link>
   );
 }
