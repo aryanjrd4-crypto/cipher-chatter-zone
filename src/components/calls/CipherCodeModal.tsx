@@ -37,12 +37,14 @@ export function CipherCodeModal({ open, roomName, onSubmit, onCancel }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl perspective-1500">
       <motion.div
-        initial={{ opacity: 0, scale: 0.92, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.88, rotateX: -8, y: 30 }}
+        animate={{ opacity: 1, scale: 1, rotateX: 0, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        style={{ transformStyle: 'preserve-3d' }}
         className={cn(
-          'relative w-full max-w-sm glass-strong rounded-2xl p-6 border border-border/40',
+          'relative w-full max-w-sm glass-strong rounded-3xl p-7 border border-border/40 float-3d',
           error && 'animate-shake'
         )}
       >
