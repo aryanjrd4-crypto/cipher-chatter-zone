@@ -358,8 +358,8 @@ function CallShell({ kind, roomMeta, onLeave, isHost }: { kind: Kind; roomMeta: 
       </main>
 
       {/* Bottom controls */}
-      <footer className="relative z-20 px-3 sm:px-6 pb-4 pt-3 backdrop-blur-md bg-background/60 border-t border-border/30">
-        <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+      <footer className="relative z-20 px-3 sm:px-6 pb-5 pt-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap glass-strong rounded-full px-4 py-2.5 mx-auto max-w-fit float-3d">
           <ControlButton active={micOn} onClick={toggleMic} label={micOn ? 'Mute' : 'Unmute'}>
             {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
           </ControlButton>
