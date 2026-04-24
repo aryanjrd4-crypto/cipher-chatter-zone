@@ -14,7 +14,14 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: [
+          '-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'SF Pro Text',
+          'Inter', 'system-ui', 'Helvetica Neue', 'Arial', 'sans-serif',
+        ],
+        display: [
+          '-apple-system', 'BlinkMacSystemFont', 'SF Pro Display',
+          'Inter', 'system-ui', 'sans-serif',
+        ],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -83,11 +90,21 @@ export default {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.96) translateZ(0)" },
+          to: { opacity: "1", transform: "scale(1) translateZ(0)" },
+        },
+        "depth-in": {
+          from: { opacity: "0", transform: "perspective(1000px) translateZ(-40px) translateY(8px)" },
+          to: { opacity: "1", transform: "perspective(1000px) translateZ(0) translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.4s ease-out",
+        "fade-in": "fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+        "scale-in": "scale-in 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
+        "depth-in": "depth-in 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
       },
     },
   },

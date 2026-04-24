@@ -8,6 +8,7 @@ import { AnonAvatar } from '@/components/chat/AnonAvatar';
 import { ReactionPicker } from '@/components/reactions/ReactionPicker';
 import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { ReportDialog } from './ReportDialog';
+import { Tilt3D } from '@/components/effects/Tilt3D';
 import { useIdentityStore } from '@/stores/useIdentityStore';
 import { useVote } from '@/hooks/useVote';
 import { useReactions } from '@/hooks/useReactions';
@@ -57,13 +58,15 @@ export function PostCard({
 
   return (
     <>
-      <motion.article
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: Math.min(index * 0.04, 0.4), duration: 0.3 }}
-        className="glass glass-hover rounded-2xl p-5 group"
-      >
-        <Link to={`/post/${id}`} className="block space-y-3">
+      <Tilt3D intensity={3} lift={4} className="group">
+        <motion.article
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: Math.min(index * 0.04, 0.4), duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="glass glass-hover rounded-3xl p-6 relative overflow-hidden"
+        >
+          <div className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          <Link to={`/post/${id}`} className="block space-y-3 relative">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <AnonAvatar id={anonymousId} size={24} />
             {category && (
@@ -140,8 +143,9 @@ export function PostCard({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      </motion.article>
+          </div>
+        </motion.article>
+      </Tilt3D>
 
       <ReportDialog open={reportOpen} onOpenChange={setReportOpen} postId={id} />
     </>

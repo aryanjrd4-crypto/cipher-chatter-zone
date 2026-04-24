@@ -358,8 +358,8 @@ function CallShell({ kind, roomMeta, onLeave, isHost }: { kind: Kind; roomMeta: 
       </main>
 
       {/* Bottom controls */}
-      <footer className="relative z-20 px-3 sm:px-6 pb-4 pt-3 backdrop-blur-md bg-background/60 border-t border-border/30">
-        <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+      <footer className="relative z-20 px-3 sm:px-6 pb-5 pt-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap glass-strong rounded-full px-4 py-2.5 mx-auto max-w-fit float-3d">
           <ControlButton active={micOn} onClick={toggleMic} label={micOn ? 'Mute' : 'Unmute'}>
             {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
           </ControlButton>
@@ -556,25 +556,34 @@ function VoiceStage() {
   const participants = useParticipants();
   return (
     <div className="h-full p-6 sm:p-10 flex items-center justify-center">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 sm:gap-8 max-w-3xl w-full">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 sm:gap-10 max-w-3xl w-full">
         {participants.map((p) => (
-          <div key={p.identity} className="flex flex-col items-center gap-2">
+          <motion.div
+            key={p.identity}
+            initial={{ opacity: 0, scale: 0.8, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 22 }}
+            className="flex flex-col items-center gap-3"
+          >
             <div className={cn(
-              'relative rounded-full p-1 transition-all',
-              p.isSpeaking && 'ring-2 ring-primary shadow-[0_0_30px_hsl(190,95%,55%,0.5)]',
+              'relative rounded-full p-1.5 transition-all duration-500',
+              p.isSpeaking && 'rim-cyan',
             )}>
-              <CipherAvatar id={p.identity} size={96} />
+              {p.isSpeaking && (
+                <span className="absolute inset-0 rounded-full border border-primary/40 animate-orbit" />
+              )}
+              <CipherAvatar id={p.identity} size={104} />
               {!p.isMicrophoneEnabled && (
-                <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-destructive/90 flex items-center justify-center shadow-lg">
+                <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-destructive/90 flex items-center justify-center shadow-lg ring-2 ring-background">
                   <MicOff className="h-3.5 w-3.5 text-destructive-foreground" />
                 </div>
               )}
             </div>
             <div className="text-center">
-              <p className="text-xs font-mono text-muted-foreground">{shortName(p.identity)}</p>
-              {p.isLocal && <p className="text-[9px] uppercase tracking-wider text-primary mt-0.5">you</p>}
+              <p className="text-xs font-mono text-muted-foreground tracking-wide">{shortName(p.identity)}</p>
+              {p.isLocal && <p className="text-[9px] uppercase tracking-[0.2em] text-primary mt-0.5">you</p>}
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
@@ -601,8 +610,8 @@ function ParticipantTile({
   return (
     <TrackRefContext.Provider value={track}>
       <div className={cn(
-        'relative w-full h-full rounded-xl sm:rounded-2xl overflow-hidden bg-secondary/40 border transition-all group',
-        speaking ? 'border-primary shadow-[0_0_24px_hsl(190,95%,55%,0.45)]' : 'border-border/30',
+        'relative w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden bg-secondary/40 border transition-all duration-500 group float-3d',
+        speaking ? 'border-primary/60 rim-cyan' : 'border-border/30',
         pinned && 'ring-2 ring-accent ring-offset-2 ring-offset-background',
       )}>
         {hasVideo && track.publication ? (
@@ -757,21 +766,24 @@ function ControlButton({
   children: React.ReactNode; onClick: () => void; active?: boolean; label?: string; accent?: boolean;
 }) {
   return (
-    <button
+    <motion.button
+      whileHover={{ y: -2, scale: 1.05 }}
+      whileTap={{ y: 1, scale: 0.94 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
       onClick={onClick}
       title={label}
       aria-label={label}
       className={cn(
-        'h-11 w-11 rounded-full flex items-center justify-center transition-all border',
+        'h-12 w-12 rounded-full flex items-center justify-center transition-colors border backdrop-blur press-3d',
         active
           ? accent
-            ? 'bg-accent/20 border-accent/50 text-accent shadow-[0_0_18px_hsl(270,80%,65%,0.4)]'
-            : 'bg-primary/20 border-primary/50 text-primary shadow-[0_0_18px_hsl(190,95%,55%,0.35)]'
-          : 'bg-secondary/60 border-border/40 text-foreground hover:bg-secondary',
+            ? 'bg-accent/25 border-accent/60 text-accent shadow-[0_0_24px_hsl(270,95%,70%,0.5),inset_0_1px_0_hsl(0_0%_100%/0.15)]'
+            : 'bg-primary/25 border-primary/60 text-primary shadow-[0_0_24px_hsl(187,100%,50%,0.45),inset_0_1px_0_hsl(0_0%_100%/0.15)]'
+          : 'bg-secondary/70 border-border/50 text-foreground hover:bg-secondary shadow-[0_4px_12px_-4px_hsl(0_0%_0%/0.6),inset_0_1px_0_hsl(0_0%_100%/0.08)]',
       )}
     >
       {children}
-    </button>
+    </motion.button>
   );
 }
 
