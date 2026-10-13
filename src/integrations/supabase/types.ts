@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
+          target_post_id: string | null
           target_room_id: string | null
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
+          target_post_id?: string | null
           target_room_id?: string | null
         }
         Update: {
@@ -34,7 +36,31 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
+          target_post_id?: string | null
           target_room_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_actions_target_post_id_fkey"
+            columns: ["target_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_invite_limits: {
+        Row: {
+          id: number
+          last_sent_at: string
+        }
+        Insert: {
+          id?: number
+          last_sent_at?: string
+        }
+        Update: {
+          id?: number
+          last_sent_at?: string
         }
         Relationships: []
       }
@@ -288,6 +314,35 @@ export type Database = {
           },
         ]
       }
+      post_view_events: {
+        Row: {
+          anonymous_id: string
+          id: string
+          post_id: string
+          viewed_at: string
+        }
+        Insert: {
+          anonymous_id: string
+          id?: string
+          post_id: string
+          viewed_at?: string
+        }
+        Update: {
+          anonymous_id?: string
+          id?: string
+          post_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_view_events_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_views: {
         Row: {
           anonymous_id: string
@@ -359,6 +414,33 @@ export type Database = {
           updated_at?: string
           upvotes?: number
           view_count?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          preferences: Json
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          preferences?: Json
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          preferences?: Json
+          updated_at?: string
         }
         Relationships: []
       }
@@ -470,6 +552,45 @@ export type Database = {
           is_typing?: boolean
           last_seen?: string
           room_id?: string
+        }
+        Relationships: []
+      }
+      site_visits: {
+        Row: {
+          anonymous_id: string
+          id: string
+          path: string
+          visited_at: string
+        }
+        Insert: {
+          anonymous_id: string
+          id?: string
+          path: string
+          visited_at?: string
+        }
+        Update: {
+          anonymous_id?: string
+          id?: string
+          path?: string
+          visited_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -604,10 +725,53 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_delete_post: { Args: { p_post_id: string }; Returns: boolean }
+      get_post_analytics: {
+        Args: { p_post_id: string }
+        Returns: {
+          total_shares: number
+          total_views: number
+          unique_viewers: number
+          views_24h: number
+          views_7d: number
+        }[]
+      }
+      get_post_view_timeline: {
+        Args: { p_post_id: string }
+        Returns: {
+          view_date: string
+          views: number
+        }[]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
+      record_admin_action: {
+        Args: {
+          p_action_type: string
+          p_details?: Json
+          p_target_post_id?: string
+          p_target_room_id?: string
+        }
+        Returns: undefined
+      }
+      record_post_view: {
+        Args: { p_anonymous_id: string; p_post_id: string }
+        Returns: undefined
+      }
+      record_site_visit: {
+        Args: { p_anonymous_id: string; p_path: string }
+        Returns: undefined
+      }
+      reserve_admin_invite: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -734,6 +898,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
