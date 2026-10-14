@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldCheck, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Lock, Loader2, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -7,10 +7,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
-// Default admin password — change in production
-const ADMIN_PASSWORD = 'CIPHER-ADMIN-2026';
+const ADMIN_EMAIL = 'aryanjrd4@gmail.com';
 
 interface Props {
   open: boolean;
@@ -20,25 +19,53 @@ interface Props {
 
 export function AdminLoginDialog({ open, onOpenChange, onLogin }: Props) {
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPw, setShowPw] = useState(false);
 
   const handleLogin = async () => {
     setLoading(true);
-    setError(false);
-    // simulate verification delay
-    await new Promise((r) => setTimeout(r, 600));
-    if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem('cipher_admin', 'true');
-      toast.success('Admin access granted');
-      onLogin();
-      onOpenChange(false);
-      setPassword('');
-    } else {
-      setError(true);
-      toast.error('Invalid admin credentials');
+    setError('');
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password });
+    if (signInError || !data.user) {
+      setError('Sign-in failed. Check the password or request a secure email link.');
+      setLoading(false);
+      return;
     }
+    const { data: isAdmin, error: roleError } = await supabase.rpc('is_admin');
+    if (roleError || !isAdmin) {
+      await supabase.auth.signOut();
+      setError('This account does not have admin access.');
+      setLoading(false);
+      return;
+    }
+    toast.success('Admin access granted');
+    onLogin();
+    onOpenChange(false);
+    setPassword('');
+    setLoading(false);
+  };
+
+  const requestSecureLink = async () => {
+    setLoading(true);
+    setError('');
+    const { error: inviteError } = await supabase.functions.invoke('send-admin-invite', { body: {} });
+    if (inviteError) {
+      const response = inviteError.context instanceof Response ? await inviteError.context.json().catch(() => null) as { error?: string } | null : null;
+      setError(response?.error || 'The secure email could not be sent. Please try again later.');
+    } else {
+      toast.success('Check the approved admin inbox for a secure setup link.');
+    }
+    setLoading(false);
+  };
+
+  const requestPasswordReset = async () => {
+    setLoading(true);
+    setError('');
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, {
+      redirectTo: `${window.location.origin}/admin/set-password`,
+    });
+    if (resetError) setError('A recovery email could not be sent. Please try again later.');
+    else toast.success('If the admin account is set up, a recovery link is on its way.');
     setLoading(false);
   };
 
@@ -51,39 +78,35 @@ export function AdminLoginDialog({ open, onOpenChange, onLogin }: Props) {
             Cipher Admin Login
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Enter the master password to access admin controls.
+            Restricted access for the approved administrator only.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          <div className="flex h-11 items-center gap-3 rounded-lg border border-border/50 bg-secondary/40 px-3 text-sm text-muted-foreground">
+            <Mail className="h-4 w-4" />
+            <span>{ADMIN_EMAIL}</span>
+          </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              type={showPw ? 'text' : 'password'}
+              type="password"
               value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(false); }}
+              onChange={(e) => { setPassword(e.target.value); setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-              placeholder="Master password"
-              className={cn(
-                'h-11 pl-10 pr-10 bg-secondary/40 font-mono',
-                error && 'border-destructive/60 animate-shake'
-              )}
+              autoComplete="current-password"
+              placeholder="Admin password"
+              className="h-11 pl-10 bg-secondary/40 font-mono"
             />
-            <button
-              onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
           </div>
 
           {error && (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-xs text-destructive text-center"
+              className="text-xs text-destructive text-center animate-shake"
             >
-              Access denied — invalid credentials
+              {error}
             </motion.p>
           )}
 
@@ -95,6 +118,13 @@ export function AdminLoginDialog({ open, onOpenChange, onLogin }: Props) {
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
             Authenticate
           </Button>
+          <Button onClick={requestSecureLink} disabled={loading} variant="outline" className="w-full h-10 gap-2">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+            Send secure setup email
+          </Button>
+          <button type="button" onClick={requestPasswordReset} disabled={loading} className="w-full text-center text-xs text-muted-foreground hover:text-primary disabled:opacity-50">
+            Forgot admin password?
+          </button>
         </div>
       </DialogContent>
     </Dialog>
