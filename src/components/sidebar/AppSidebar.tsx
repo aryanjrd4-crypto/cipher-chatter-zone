@@ -470,8 +470,29 @@ function SidebarItem({
 
 function AdminSidebarButton({ onNavigate }: { onNavigate?: () => void }) {
   const [loginOpen, setLoginOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
-  const isAdmin = sessionStorage.getItem('cipher_admin') === 'true';
+
+  useState(() => {
+    let active = true;
+    const checkAdmin = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        if (active) setIsAdmin(false);
+        return;
+      }
+      const { data } = await supabase.rpc('is_admin');
+      if (active) setIsAdmin(data === true);
+    };
+    void checkAdmin();
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      window.setTimeout(() => void checkAdmin(), 0);
+    });
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  });
 
   if (isAdmin) {
     return (
