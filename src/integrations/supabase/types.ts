@@ -726,6 +726,20 @@ export type Database = {
     }
     Functions: {
       admin_delete_post: { Args: { p_post_id: string }; Returns: boolean }
+      delete_own_post: {
+        Args: { p_anonymous_id: string; p_post_id: string }
+        Returns: boolean
+      }
+      get_admin_analytics_summary: {
+        Args: never
+        Returns: {
+          total_posts: number
+          total_site_visits: number
+          total_views: number
+          unique_visitors: number
+          visits_24h: number
+        }[]
+      }
       get_post_analytics: {
         Args: { p_post_id: string }
         Returns: {
