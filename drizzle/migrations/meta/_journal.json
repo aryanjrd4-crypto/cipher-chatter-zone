@@ -15,6 +15,13 @@
       "when": 1791950426922,
       "tag": "0001_tighten_post_moderation_and_reporting",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791950591358,
+      "tag": "0002_require_confirmed_email_for_admin_role",
+      "breakpoints": true
     }
   ]
 }
