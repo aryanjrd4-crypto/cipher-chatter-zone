@@ -176,7 +176,7 @@ export default function AdminDashboard() {
 
   const matchedPosts = posts.filter((post) => `${post.title} ${post.anonymous_id}`.toLowerCase().includes(search.toLowerCase()));
   const events = [
-    { id: view.id, postId: view.post_id, visitor: view.anonymous_id, at: view.viewed_at, title: view.posts?.title ?? 'Post unavailable' })),
+    ...postViews.map((view) => ({ id: view.id, postId: view.post_id, visitor: view.anonymous_id, at: view.viewed_at, title: view.posts?.title ?? 'Post unavailable' })),
     ...legacyViews.map((view) => ({ id: `legacy-${view.id}`, postId: view.post_id, visitor: view.anonymous_id, at: view.viewed_at, title: posts.find((post) => post.id === view.post_id)?.title ?? 'Earlier post' })),
   ].sort((left, right) => new Date(right.at).getTime() - new Date(left.at).getTime()).slice(0, 150);
 
