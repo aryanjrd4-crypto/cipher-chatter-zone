@@ -28,6 +28,13 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const callerKey = req.headers.get("apikey");
+    if (!callerKey || callerKey !== Deno.env.get("SUPABASE_ANON_KEY")) {
+      return new Response(JSON.stringify({ error: "Admin setup is unavailable." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const admin = createClient(serviceUrl, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
