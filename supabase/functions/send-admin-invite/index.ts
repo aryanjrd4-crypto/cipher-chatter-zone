@@ -59,7 +59,8 @@ Deno.serve(async (req) => {
       redirectTo: `${origin}/admin/set-password`,
     });
     if (error) {
-      const alreadyExists = error.message.toLowerCase().includes("already") || error.message.toLowerCase().includes("registered");
+      const safeMessage = `${error.message} ${error.code || ''}`.toLowerCase();
+      const alreadyExists = safeMessage.includes("already") || safeMessage.includes("registered") || safeMessage.includes("exists");
       return new Response(JSON.stringify({
         error: alreadyExists
           ? "An admin account already exists. Sign in with its password or use the account recovery link."
