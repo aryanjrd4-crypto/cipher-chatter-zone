@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { isApprovedAdminEmail } from '@/lib/admin-access';
 
 export default function AdminSetPassword() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function AdminSetPassword() {
     }
     setBusy(true);
     const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user || userData.user.email?.toLowerCase() !== 'aryanjrd4@gmail.com') {
+    if (userError || !userData.user || !isApprovedAdminEmail(userData.user.email)) {
       await supabase.auth.signOut();
       toast.error('This setup link is not valid for the admin account. Request a new link.');
       setBusy(false);

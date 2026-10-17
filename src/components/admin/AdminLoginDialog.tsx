@@ -8,8 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-
-const ADMIN_EMAIL = 'aryanjrd4@gmail.com';
+import { APPROVED_ADMIN_EMAIL } from '@/lib/admin-access';
 
 interface Props {
   open: boolean;
@@ -25,7 +24,7 @@ export function AdminLoginDialog({ open, onOpenChange, onLogin }: Props) {
   const handleLogin = async () => {
     setLoading(true);
     setError('');
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password });
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: APPROVED_ADMIN_EMAIL, password });
     if (signInError || !data.user) {
       setError('Sign-in failed. Check the password or request a secure email link.');
       setLoading(false);
@@ -61,7 +60,7 @@ export function AdminLoginDialog({ open, onOpenChange, onLogin }: Props) {
   const requestPasswordReset = async () => {
     setLoading(true);
     setError('');
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, {
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(APPROVED_ADMIN_EMAIL, {
       redirectTo: `${window.location.origin}/admin/set-password`,
     });
     if (resetError) setError('A recovery email could not be sent. Please try again later.');
@@ -85,7 +84,7 @@ export function AdminLoginDialog({ open, onOpenChange, onLogin }: Props) {
         <div className="space-y-4 py-2">
           <div className="flex h-11 items-center gap-3 rounded-lg border border-border/50 bg-secondary/40 px-3 text-sm text-muted-foreground">
             <Mail className="h-4 w-4" />
-            <span>{ADMIN_EMAIL}</span>
+            <span>{APPROVED_ADMIN_EMAIL}</span>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
