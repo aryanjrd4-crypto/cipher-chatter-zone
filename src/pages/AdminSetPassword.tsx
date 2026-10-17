@@ -11,8 +11,14 @@ export default function AdminSetPassword() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
+  const linkType = new URLSearchParams(window.location.hash.slice(1)).get('type');
+  const validLink = linkType === 'invite' || linkType === 'recovery';
 
   const savePassword = async () => {
+    if (!validLink) {
+      toast.error('This secure link is invalid or expired. Request a new email link.');
+      return;
+    }
     if (password.length < 12) {
       toast.error('Choose a password with at least 12 characters.');
       return;
@@ -60,9 +66,10 @@ export default function AdminSetPassword() {
           </div>
         </header>
         <div className="space-y-3">
+          {!validLink && <p role="alert" className="text-center text-xs text-destructive">Secure link invalid or expired. Request a new email link from Cipher Admin.</p>}
           <Input aria-label="New password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 12 characters" />
           <Input aria-label="Confirm password" type="password" autoComplete="new-password" value={confirm} onChange={(event) => setConfirm(event.target.value)} placeholder="Confirm password" onKeyDown={(event) => event.key === 'Enter' && void savePassword()} />
-          <Button className="w-full gap-2" onClick={() => void savePassword()} disabled={!password || !confirm || busy}>
+          <Button className="w-full gap-2" onClick={() => void savePassword()} disabled={!validLink || !password || !confirm || busy}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
             Set password
           </Button>

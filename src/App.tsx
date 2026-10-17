@@ -7,7 +7,6 @@ import CreatePost from "./pages/CreatePost";
 import PostDetail from "./pages/PostDetail";
 import SettingsPage from "./pages/SettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import AdminAnalytics from "./pages/AdminAnalytics";
 import ChatPage from "./pages/ChatPage";
 import ActivityPage from "./pages/ActivityPage";
 import VoiceRoomsPage from "./pages/VoiceRoomsPage";
