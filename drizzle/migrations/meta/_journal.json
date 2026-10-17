@@ -22,6 +22,13 @@
       "when": 1791950591358,
       "tag": "0002_require_confirmed_email_for_admin_role",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792207544107,
+      "tag": "0003_restrict_admin_audit_writes_and_role_changes",
+      "breakpoints": true
     }
   ]
 }

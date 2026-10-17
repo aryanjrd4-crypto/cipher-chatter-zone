@@ -99,7 +99,11 @@ export default function PostDetail() {
   };
 
   const deletePost = async () => {
-    await supabase.from('posts').delete().eq('id', id!).eq('anonymous_id', anonymousId);
+    const { data: deleted, error } = await supabase.rpc('delete_own_post', { p_post_id: id!, p_anonymous_id: anonymousId });
+    if (error || !deleted) {
+      toast.error('Post could not be deleted.');
+      return;
+    }
     toast.success('Post deleted');
     queryClient.invalidateQueries({ queryKey: ['posts'] });
     navigate('/');

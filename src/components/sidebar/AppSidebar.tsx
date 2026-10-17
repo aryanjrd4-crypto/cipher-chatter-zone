@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -473,7 +473,7 @@ function AdminSidebarButton({ onNavigate }: { onNavigate?: () => void }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
-  useState(() => {
+  useEffect(() => {
     let active = true;
     const checkAdmin = async () => {
       const { data: userData } = await supabase.auth.getUser();
@@ -510,13 +510,15 @@ function AdminSidebarButton({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={() => setLoginOpen(true)}
-        className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+        className="w-full justify-start gap-2 px-3 py-1.5 text-[10px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
       >
         <ShieldCheck className="h-3 w-3" />
         Cipher Admin
-      </button>
+      </Button>
       <AdminLoginDialog
         open={loginOpen}
         onOpenChange={setLoginOpen}

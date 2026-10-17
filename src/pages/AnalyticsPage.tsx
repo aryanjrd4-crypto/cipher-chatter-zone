@@ -31,16 +31,17 @@ export default function AnalyticsPage() {
     queryFn: async () => {
       const { data: posts } = await supabase.from('posts').select('id').eq('anonymous_id', anonymousId);
       if (!posts?.length) return [];
-      const ids = posts.map((p) => p.id);
-      const { data: views } = await supabase.from('post_views').select('viewed_at').in('post_id', ids);
+      const viewResults = await Promise.all(posts.map((post) => supabase.rpc('get_post_view_timeline', { p_post_id: post.id })));
       const byDay: Record<string, number> = {};
       const day = 24 * 60 * 60 * 1000;
       for (let i = 6; i >= 0; i--) {
         byDay[new Date(Date.now() - i * day).toISOString().slice(0, 10)] = 0;
       }
-      views?.forEach((v) => {
-        const d = new Date(v.viewed_at).toISOString().slice(0, 10);
-        if (d in byDay) byDay[d]++;
+      viewResults.forEach(({ data, error }) => {
+        if (error) throw error;
+        data?.forEach((view) => {
+          if (view.view_date in byDay) byDay[view.view_date] += Number(view.views);
+        });
       });
       return Object.entries(byDay).map(([date, views]) => ({ date: date.slice(5), views }));
     },

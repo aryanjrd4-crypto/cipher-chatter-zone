@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { Json } from '@/integrations/supabase/types';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -21,7 +22,7 @@ type PostViewEvent = { id: string; post_id: string; anonymous_id: string; viewed
 type SiteVisit = { id: string; anonymous_id: string; path: string; visited_at: string };
 
 const formatTime = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-const cipher = (value: string) => `Cipher#${value.replaceAll('-', '').slice(0, 8).toUpperCase()}`;
+const cipher = (value: string) => `Cipher#${value.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
@@ -119,7 +120,7 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ['posts'] }),
     ]);
   };
-  const logAction = async (action: string, roomId?: string, postId?: string, details: Record<string, unknown> = {}) => {
+  const logAction = async (action: string, roomId?: string, postId?: string, details: Json = {}) => {
     const { error } = await supabase.rpc('record_admin_action', {
       p_action_type: action, p_target_room_id: roomId ?? null, p_target_post_id: postId ?? null, p_details: details,
     });
@@ -251,10 +252,10 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2 text-xs text-muted-foreground"><Video className="h-4 w-4 text-primary" />{rooms.length} rooms · {rooms.filter((room) => room.is_active).length} active</div>
           {roomsLoading ? <Loading /> : rooms.length === 0 ? <Empty text="No video rooms exist yet." /> : rooms.map((room) => <article key={room.id} className="glass rounded-xl p-4 space-y-3">
             <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-sm font-semibold">{room.name}</h3><p className="mt-1 text-xs text-muted-foreground">{room.room_type} · {room.category} · {room.is_active ? 'Active' : 'Ended'}</p></div><Badge variant="outline">{room.is_locked ? 'Locked' : 'Open'}</Badge></div>
-            {room.invite_code && <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2 font-mono text-xs"><span>Cipher code</span><span className="text-primary">{showCodes[room.id] ? room.invite_code : '••••••••'}</span><Button variant="ghost" size="icon" className="ml-auto h-7 w-7" aria-label="Toggle code visibility" onClick={() => setShowCodes((state) => ({ ...state, [room.id]: !state[room.id] }))}>{showCodes[room.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</Button>{showCodes[room.id] && <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy cipher code" onClick={() => void copyCode(room.invite_code!, room.id)}>{copied === room.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}</Button>}</div>}
+            {room.invite_code && <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2 font-mono text-xs"><span>Cipher code</span><span className="text-primary">{showCodes[room.id] ? room.invite_code : '••••••••'}</span><Button variant="ghost" size="icon" className="ml-auto h-7 w-7" aria-label="Toggle code visibility" onClick={() => setShowCodes((state) => ({ ...state, [room.id]: !state[room.id] }))}>{showCodes[room.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</Button>{showCodes[room.id] && <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy cipher code" onClick={() => void copyCode(room.invite_code ?? '', room.id)}>{copied === room.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}</Button>}</div>}
             <div className="flex flex-wrap gap-2">{room.is_active && <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => void endCall(room.id)}><PhoneOff className="h-3.5 w-3.5" />End call</Button>}{room.invite_code && <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => void resetCode(room.id)}><RefreshCw className="h-3.5 w-3.5" />Reset code</Button>}<Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive" onClick={() => void deleteRoom(room.id)}><Trash2 className="h-3.5 w-3.5" />Delete room</Button></div>
           </article>)}
-          <div className="glass rounded-xl p-4 space-y-2"><h2 className="text-sm font-semibold">Admin activity</h2>{roomActions.length === 0 ? <p className="text-xs text-muted-foreground">No admin actions recorded.</p> : roomActions.map((action) => <p key={action.id} className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground"><span>{action.action_type.replaceAll('_', ' ')}</span><time>{formatTime(action.created_at)}</time></p>)}</div>
+          <div className="glass rounded-xl p-4 space-y-2"><h2 className="text-sm font-semibold">Admin activity</h2>{roomActions.length === 0 ? <p className="text-xs text-muted-foreground">No admin actions recorded.</p> : roomActions.map((action) => <p key={action.id} className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground"><span>{action.action_type.replace(/_/g, ' ')}</span><time>{formatTime(action.created_at)}</time></p>)}</div>
         </TabsContent>
       </Tabs>
     </motion.div>
