@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -473,7 +473,7 @@ function AdminSidebarButton({ onNavigate }: { onNavigate?: () => void }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
-  useState(() => {
+  useEffect(() => {
     let active = true;
     const checkAdmin = async () => {
       const { data: userData } = await supabase.auth.getUser();
