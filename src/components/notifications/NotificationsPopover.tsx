@@ -3,8 +3,8 @@ import { Bell, MessageCircle, Heart, Share2, AtSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useNotifications } from '@/hooks/useNotifications';
-import { formatDistanceToNow } from '@/lib/time';
 import { motion } from 'framer-motion';
+import { MessageTimestamp } from '@/components/MessageTimestamp';
 
 const ICONS: Record<string, any> = {
   reply: MessageCircle,
@@ -69,7 +69,7 @@ export function NotificationsPopover() {
                     <p className="text-xs text-foreground">
                       <span className="font-mono text-muted-foreground">Anon</span> {text}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{formatDistanceToNow(n.created_at)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5"><MessageTimestamp date={n.created_at} /></p>
                   </div>
                   {!n.read && <div className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0" />}
                 </Link>
