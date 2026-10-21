@@ -18,7 +18,6 @@ import { useVote } from '@/hooks/useVote';
 import { useReactions } from '@/hooks/useReactions';
 import { useViewTracking } from '@/hooks/useViewTracking';
 import { useShareTracking } from '@/hooks/useShareTracking';
-import { formatDistanceToNow } from '@/lib/time';
 import { MessageTimestamp } from '@/components/MessageTimestamp';
 import { toast } from 'sonner';
 

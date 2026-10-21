@@ -7,7 +7,6 @@ import { ReactionPicker } from '@/components/reactions/ReactionPicker';
 import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { useReactions } from '@/hooks/useReactions';
 import { useIdentityStore } from '@/stores/useIdentityStore';
-import { formatDistanceToNow } from '@/lib/time';
 import { MessageTimestamp } from '@/components/MessageTimestamp';
 
 interface ChatMessageProps {

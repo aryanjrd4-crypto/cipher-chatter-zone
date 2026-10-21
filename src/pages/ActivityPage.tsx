@@ -6,7 +6,6 @@ import { useMyPosts, useMyReplies, useMyReactedPosts } from '@/hooks/useUserPost
 import { useBookmarkedPosts } from '@/hooks/useBookmarks';
 import { Link } from 'react-router-dom';
 import { FileText, MessageSquare, Bookmark, Heart, Sparkles, Clock } from 'lucide-react';
-import { formatDistanceToNow } from '@/lib/time';
 import { MessageTimestamp } from '@/components/MessageTimestamp';
 
 const TABS = [

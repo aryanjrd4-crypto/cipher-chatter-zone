@@ -15,7 +15,6 @@ import { useReactions } from '@/hooks/useReactions';
 import { useShareTracking } from '@/hooks/useShareTracking';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { toast } from 'sonner';
-import { formatDistanceToNow } from '@/lib/time';
 import { MessageTimestamp } from '@/components/MessageTimestamp';
 
 interface PostCardProps {

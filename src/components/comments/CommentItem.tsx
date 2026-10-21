@@ -9,7 +9,6 @@ import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { useIdentityStore } from '@/stores/useIdentityStore';
 import { useVote } from '@/hooks/useVote';
 import { useReactions } from '@/hooks/useReactions';
-import { formatDistanceToNow } from '@/lib/time';
 import { MessageTimestamp } from '@/components/MessageTimestamp';
 
 interface Comment {
