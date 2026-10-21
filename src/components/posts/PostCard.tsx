@@ -16,6 +16,7 @@ import { useShareTracking } from '@/hooks/useShareTracking';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from '@/lib/time';
+import { MessageTimestamp } from '@/components/MessageTimestamp';
 
 interface PostCardProps {
   id: string;
@@ -80,7 +81,7 @@ export function PostCard({
             )}
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              <span>{formatDistanceToNow(createdAt)}</span>
+              <MessageTimestamp date={createdAt} />
             </div>
             <div className="flex items-center gap-1 ml-auto">
               <Eye className="h-3 w-3" />

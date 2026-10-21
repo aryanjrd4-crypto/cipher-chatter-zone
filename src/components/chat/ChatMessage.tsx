@@ -8,6 +8,7 @@ import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { useReactions } from '@/hooks/useReactions';
 import { useIdentityStore } from '@/stores/useIdentityStore';
 import { formatDistanceToNow } from '@/lib/time';
+import { MessageTimestamp } from '@/components/MessageTimestamp';
 
 interface ChatMessageProps {
   id: string;
@@ -45,7 +46,7 @@ export function ChatMessage({ id, content, anonymousId, createdAt, parentContent
       <div className={`max-w-[75%] min-w-0 space-y-1 flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground px-1">
           {!isOwn && <span className="font-medium text-secondary-foreground/80">{anonymousId.slice(0, 6)}</span>}
-          <span className="tabular-nums">{formatDistanceToNow(createdAt)}</span>
+          <MessageTimestamp date={createdAt} className="tabular-nums" />
           {isOwn && <span className="text-primary/80 font-medium uppercase tracking-wider text-[9px]">You</span>}
         </div>
 

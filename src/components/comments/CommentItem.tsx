@@ -10,6 +10,7 @@ import { useIdentityStore } from '@/stores/useIdentityStore';
 import { useVote } from '@/hooks/useVote';
 import { useReactions } from '@/hooks/useReactions';
 import { formatDistanceToNow } from '@/lib/time';
+import { MessageTimestamp } from '@/components/MessageTimestamp';
 
 interface Comment {
   id: string;
@@ -50,7 +51,7 @@ export function CommentItem({ comment, onReply, onDelete, depth = 0 }: CommentIt
       <div className="py-3 space-y-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <AnonAvatar id={comment.anonymous_id} size={20} />
-          <span>{formatDistanceToNow(comment.created_at)}</span>
+          <MessageTimestamp date={comment.created_at} />
           {isOwn && (
             <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-medium">You</span>
           )}

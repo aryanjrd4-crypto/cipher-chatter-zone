@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
@@ -14,10 +16,12 @@ export function formatMessageTimestamp(dateStr: string | null | undefined, now =
 
   const age = now - timestamp;
   if (age >= DAY) {
-    return new Intl.DateTimeFormat(undefined, {
+    const parts = new Intl.DateTimeFormat('en-GB', {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit', hour12: true,
-    }).format(timestamp).replace(',', ',');
+    }).formatToParts(timestamp);
+    const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? '';
+    return `${part('day')} ${part('month')} ${part('year')}, ${part('hour')}:${part('minute')} ${part('dayPeriod').toUpperCase()}`;
   }
   if (age < 0) return 'Just now';
   if (age < MINUTE) return 'Just now';
@@ -55,5 +59,3 @@ export function useMessageTimestampRefresh(dateStr: string | null | undefined): 
 
   return now;
 }
-
-import { useEffect, useState } from 'react';

@@ -19,6 +19,7 @@ import { useReactions } from '@/hooks/useReactions';
 import { useViewTracking } from '@/hooks/useViewTracking';
 import { useShareTracking } from '@/hooks/useShareTracking';
 import { formatDistanceToNow } from '@/lib/time';
+import { MessageTimestamp } from '@/components/MessageTimestamp';
 import { toast } from 'sonner';
 
 function nestComments(comments: any[]) {
@@ -141,7 +142,7 @@ export default function PostDetail() {
               <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium text-[10px] uppercase tracking-wider">{post.category}</span>
             )}
             <Clock className="h-3 w-3" />
-            <span>{formatDistanceToNow(post.created_at)}</span>
+            <MessageTimestamp date={post.created_at} />
             <div className="flex items-center gap-1 ml-auto">
               <Eye className="h-3 w-3" />
               <span>{post.view_count} viewed</span>

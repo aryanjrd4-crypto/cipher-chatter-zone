@@ -7,6 +7,7 @@ import { useBookmarkedPosts } from '@/hooks/useBookmarks';
 import { Link } from 'react-router-dom';
 import { FileText, MessageSquare, Bookmark, Heart, Sparkles, Clock } from 'lucide-react';
 import { formatDistanceToNow } from '@/lib/time';
+import { MessageTimestamp } from '@/components/MessageTimestamp';
 
 const TABS = [
   { id: 'posts', label: 'My Posts', icon: FileText },
@@ -97,7 +98,7 @@ export default function ActivityPage() {
                   >
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
                       <Clock className="h-2.5 w-2.5" />
-                      {formatDistanceToNow(r.created_at)} on
+                      <MessageTimestamp date={r.created_at} /> on
                     </p>
                     <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{r.postTitle}</p>
                     <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">{r.content}</p>
