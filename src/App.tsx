@@ -17,6 +17,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminSetPassword from "./pages/AdminSetPassword";
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { trackPageView } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useIdentityStore } from "@/stores/useIdentityStore";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,8 @@ function SiteVisitTracker() {
     const path = location.pathname;
     if (lastPath.current === path || path.startsWith('/admin')) return;
     lastPath.current = path;
+    // Google Analytics page view (admin pages are excluded from tracking).
+    trackPageView(path);
     void supabase.rpc('record_site_visit', { p_anonymous_id: anonymousId, p_path: path });
   }, [location.pathname, anonymousId]);
 
