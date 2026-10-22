@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   BarChart3, Check, Copy, Eye, EyeOff, FileText, Globe, Loader2,
-  LogOut, PhoneOff, RefreshCw, ShieldCheck, Trash2, Video,
+  LogOut, PhoneOff, RefreshCw, ShieldCheck, Sparkles, Trash2, Video,
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,14 @@ import { toast } from 'sonner';
 type AdminPost = { id: string; title: string; anonymous_id: string; created_at: string; view_count: number };
 type PostViewEvent = { id: string; post_id: string; anonymous_id: string; viewed_at: string; posts: { title: string } | null };
 type SiteVisit = { id: string; anonymous_id: string; path: string; visited_at: string };
+type Insights = {
+  daily: { day: string; visits: number; ciphers: number }[];
+  hourly: { hour: number; visits: number }[];
+  pages: { path: string; visits: number }[];
+  top_posts: { id: string; title: string; view_count: number }[];
+  posts_daily: { day: string; posts: number }[];
+  visitors: { total_visits: number; unique_ciphers: number; returning_ciphers: number };
+};
 
 const formatTime = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 const cipher = (value: string) => `Cipher#${value.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
@@ -92,6 +100,19 @@ export default function AdminDashboard() {
       return (data ?? []) as SiteVisit[];
     }, enabled: isAdmin, refetchInterval: 30_000,
   });
+  const { data: insights } = useQuery({
+    queryKey: ['admin-insights'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_admin_insights');
+      if (error) throw error;
+      return data as unknown as Insights;
+    }, enabled: isAdmin, refetchInterval: 60_000,
+  });
+  // Rotate the UTC-hour buckets into the admin's local time zone so the
+  // peak-hours chart reads in the times the admin actually thinks in.
+  const utcHourly = insights?.hourly ?? [];
+  const tzOffset = Math.round(-new Date().getTimezoneOffset() / 60);
+  const localHours = utcHourly.map((_, hour) => utcHourly[((hour - tzOffset) % 24 + 24) % 24]?.visits ?? 0);
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['admin-video-rooms'],
     queryFn: async () => {
@@ -116,6 +137,7 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ['admin-post-view-events'] }),
       queryClient.invalidateQueries({ queryKey: ['admin-legacy-post-views'] }),
       queryClient.invalidateQueries({ queryKey: ['admin-site-visits'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin-insights'] }),
       queryClient.invalidateQueries({ queryKey: ['admin-action-log'] }),
       queryClient.invalidateQueries({ queryKey: ['posts'] }),
     ]);
@@ -205,11 +227,12 @@ export default function AdminDashboard() {
       </section>
 
       <Tabs defaultValue="posts" className="space-y-4">
-        <TabsList className="grid h-auto w-full grid-cols-4 gap-1 bg-secondary/70 p-1">
+        <TabsList className="grid h-auto w-full grid-cols-5 gap-1 bg-secondary/70 p-1">
           <TabsTrigger value="posts" className="px-2 py-2 text-xs">Posts</TabsTrigger>
           <TabsTrigger value="views" className="px-2 py-2 text-xs">Views</TabsTrigger>
           <TabsTrigger value="visits" className="px-2 py-2 text-xs">Visits</TabsTrigger>
           <TabsTrigger value="rooms" className="px-2 py-2 text-xs">Rooms</TabsTrigger>
+          <TabsTrigger value="insights" className="px-2 py-2 text-xs">Insights</TabsTrigger>
         </TabsList>
 
         <TabsContent value="posts" className="space-y-3">
@@ -257,6 +280,45 @@ export default function AdminDashboard() {
           </article>)}
           <div className="glass rounded-xl p-4 space-y-2"><h2 className="text-sm font-semibold">Admin activity</h2>{roomActions.length === 0 ? <p className="text-xs text-muted-foreground">No admin actions recorded.</p> : roomActions.map((action) => <p key={action.id} className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground"><span>{action.action_type.replace(/_/g, ' ')}</span><time>{formatTime(action.created_at)}</time></p>)}</div>
         </TabsContent>
+
+        <TabsContent value="insights" className="space-y-3">
+          <div className="glass rounded-xl p-4"><h2 className="text-sm font-semibold">Audience insights</h2><p className="mt-1 text-xs text-muted-foreground">Usage patterns built only from page paths, anonymous Cipher IDs, and timestamps — never identities.</p></div>
+          <section className="grid grid-cols-3 gap-3">
+            <Metric icon={Globe} label="Total visits" value={insights?.visitors.total_visits ?? 0} />
+            <Metric icon={BarChart3} label="Unique ciphers" value={insights?.visitors.unique_ciphers ?? 0} />
+            <Metric icon={Sparkles} label="Returning ciphers" value={insights?.visitors.returning_ciphers ?? 0} />
+          </section>
+          <div className="glass rounded-xl p-4 space-y-2">
+            <h2 className="text-sm font-semibold">Daily visits · last 14 days</h2>
+            <BarChart values={(insights?.daily ?? []).map((day) => day.visits)} labels={(insights?.daily ?? []).map((day) => day.day.slice(5))} />
+          </div>
+          <div className="glass rounded-xl p-4 space-y-2">
+            <h2 className="text-sm font-semibold">Peak hours · your local time</h2>
+            <BarChart values={localHours} labels={localHours.map((_, hour) => (hour % 3 === 0 ? String(hour) : ''))} />
+          </div>
+          <div className="glass rounded-xl p-4 space-y-2">
+            <h2 className="text-sm font-semibold">Most visited sections</h2>
+            {(insights?.pages ?? []).length === 0 ? <p className="text-xs text-muted-foreground">No visits recorded yet.</p> : (insights?.pages ?? []).map((page) => (
+              <div key={page.path} className="flex items-center justify-between gap-3 text-xs">
+                <span className="truncate text-foreground">{page.path}</span>
+                <Badge variant="outline" className="gap-1"><Eye className="h-3 w-3" />{page.visits}</Badge>
+              </div>
+            ))}
+          </div>
+          <div className="glass rounded-xl p-4 space-y-2">
+            <h2 className="text-sm font-semibold">Most viewed posts</h2>
+            {(insights?.top_posts ?? []).length === 0 ? <p className="text-xs text-muted-foreground">No posts yet.</p> : (insights?.top_posts ?? []).map((post) => (
+              <div key={post.id} className="flex items-center justify-between gap-3 text-xs">
+                <Link to={`/post/${post.id}`} className="min-w-0 truncate hover:text-primary">{post.title || 'Untitled'}</Link>
+                <Badge variant="outline" className="gap-1"><Eye className="h-3 w-3" />{post.view_count}</Badge>
+              </div>
+            ))}
+          </div>
+          <div className="glass rounded-xl p-4 space-y-2">
+            <h2 className="text-sm font-semibold">New posts per day · last 14 days</h2>
+            <BarChart values={(insights?.posts_daily ?? []).map((day) => day.posts)} labels={(insights?.posts_daily ?? []).map((day) => day.day.slice(5))} />
+          </div>
+        </TabsContent>
       </Tabs>
     </motion.div>
 
@@ -271,6 +333,24 @@ export default function AdminDashboard() {
 
 function Metric({ icon: Icon, label, value }: { icon: typeof Eye; label: string; value: number }) {
   return <div className="glass rounded-xl p-4"><Icon className="mb-2 h-4 w-4 text-primary" /><p className="text-xl font-semibold">{value.toLocaleString()}</p><p className="text-xs text-muted-foreground">{label}</p></div>;
+}
+
+function BarChart({ values, labels }: { values: number[]; labels?: string[] }) {
+  const max = Math.max(1, ...values);
+  return (
+    <div>
+      <div className="flex h-24 items-end gap-1">
+        {values.map((value, index) => (
+          <div key={index} className="flex-1 rounded-t-sm bg-primary/25 transition-colors hover:bg-primary/60" style={{ height: `${Math.max(4, (value / max) * 100)}%` }} title={`${value}`} />
+        ))}
+      </div>
+      {labels && labels.length > 0 && (
+        <div className="mt-1 flex gap-1 text-[9px] text-muted-foreground">
+          {labels.map((label, index) => <span key={index} className="min-w-0 flex-1 truncate text-center">{label}</span>)}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Loading() { return <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>; }

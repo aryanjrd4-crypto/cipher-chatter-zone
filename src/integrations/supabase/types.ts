@@ -740,6 +740,7 @@ export type Database = {
           visits_24h: number
         }[]
       }
+      get_admin_insights: { Args: never; Returns: Json }
       get_post_analytics: {
         Args: { p_post_id: string }
         Returns: {
