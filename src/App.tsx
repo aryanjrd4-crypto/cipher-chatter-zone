@@ -17,6 +17,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminSetPassword from "./pages/AdminSetPassword";
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { trackPageView } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useIdentityStore } from "@/stores/useIdentityStore";
 import NotFound from "./pages/NotFound";
