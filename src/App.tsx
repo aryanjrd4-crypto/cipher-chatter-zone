@@ -33,6 +33,8 @@ function SiteVisitTracker() {
     const path = location.pathname;
     if (lastPath.current === path || path.startsWith('/admin')) return;
     lastPath.current = path;
+    // Google Analytics page view (admin pages are excluded from tracking).
+    trackPageView(path);
     void supabase.rpc('record_site_visit', { p_anonymous_id: anonymousId, p_path: path });
   }, [location.pathname, anonymousId]);
 
