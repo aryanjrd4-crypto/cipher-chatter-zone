@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Json } from '@/integrations/supabase/types';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
-  BarChart3, Check, Copy, Eye, EyeOff, FileText, Globe, Loader2,
+  BarChart3, Check, Copy, Download, Eye, EyeOff, FileText, FileUp, Globe, Loader2,
   LogOut, PhoneOff, RefreshCw, ShieldCheck, Sparkles, Trash2, Video,
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
@@ -41,6 +41,11 @@ export default function AdminDashboard() {
   const [copied, setCopied] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminPost | null>(null);
   const [search, setSearch] = useState('');
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [preparedBackup, setPreparedBackup] = useState<{ blob: Blob; filename: string } | null>(null);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const backupInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -186,6 +191,65 @@ export default function AdminDashboard() {
     window.setTimeout(() => setCopied(null), 1800);
   };
 
+  const prepareBackup = async () => {
+    if (preparedBackup) {
+      const url = URL.createObjectURL(preparedBackup.blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = preparedBackup.filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      setPreparedBackup(null);
+      return;
+    }
+    setBackupBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-backup', { body: { operation: 'export' } });
+      if (error || !data?.backup) throw error ?? new Error('Backup unavailable');
+      const blob = new Blob([JSON.stringify(data.backup, null, 2)], { type: 'application/json;charset=utf-8' });
+      const date = new Date().toISOString().slice(0, 10);
+      setPreparedBackup({ blob, filename: `cipher-chatter-backup-${date}.json` });
+      toast.success('Backup is ready to save.');
+    } catch {
+      toast.error('Could not prepare the backup. Check admin sign-in and try again.');
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const selectBackupFile = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error('Backup files must be 15 MB or smaller.');
+      if (backupInput.current) backupInput.current.value = '';
+      return;
+    }
+    setRestoreFile(file);
+    setRestoreOpen(true);
+  };
+
+  const restoreBackup = async () => {
+    if (!restoreFile) return;
+    setBackupBusy(true);
+    try {
+      const backup = JSON.parse(await restoreFile.text()) as unknown;
+      const { data, error } = await supabase.functions.invoke('admin-backup', { body: { operation: 'import', backup } });
+      if (error) throw error;
+      const added = Object.values((data?.restored ?? {}) as Record<string, number>).reduce((sum, count) => sum + count, 0);
+      toast.success(added > 0 ? `Backup added ${added.toLocaleString()} new records.` : 'Backup checked; all records were already present.');
+      setRestoreOpen(false);
+      setRestoreFile(null);
+      if (backupInput.current) backupInput.current.value = '';
+      await queryClient.invalidateQueries();
+    } catch {
+      toast.error('The backup could not be restored. Check the file and try again.');
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
   if (checking) return <Layout wide><div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div></Layout>;
   if (!isAdmin) return <Layout wide>
     <section className="mx-auto max-w-md py-12 text-center space-y-4">
@@ -227,12 +291,13 @@ export default function AdminDashboard() {
       </section>
 
       <Tabs defaultValue="posts" className="space-y-4">
-        <TabsList className="grid h-auto w-full grid-cols-5 gap-1 bg-secondary/70 p-1">
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-secondary/70 p-1 sm:grid-cols-6">
           <TabsTrigger value="posts" className="px-2 py-2 text-xs">Posts</TabsTrigger>
           <TabsTrigger value="views" className="px-2 py-2 text-xs">Views</TabsTrigger>
           <TabsTrigger value="visits" className="px-2 py-2 text-xs">Visits</TabsTrigger>
           <TabsTrigger value="rooms" className="px-2 py-2 text-xs">Rooms</TabsTrigger>
           <TabsTrigger value="insights" className="px-2 py-2 text-xs">Insights</TabsTrigger>
+          <TabsTrigger value="backup" className="px-2 py-2 text-xs">Backup</TabsTrigger>
         </TabsList>
 
         <TabsContent value="posts" className="space-y-3">
@@ -319,6 +384,41 @@ export default function AdminDashboard() {
             <BarChart values={(insights?.posts_daily ?? []).map((day) => day.posts)} labels={(insights?.posts_daily ?? []).map((day) => day.day.slice(5))} />
           </div>
         </TabsContent>
+
+        <TabsContent value="backup" className="space-y-4">
+          <section className="glass rounded-xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg border border-primary/20 bg-primary/10 p-2 text-primary"><Download className="h-4 w-4" /></div>
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold">Admin data backup</h2>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Save posts, conversations, rooms, and anonymous activity to a dated JSON file.</p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button onClick={() => void prepareBackup()} disabled={backupBusy} className="gap-2">
+                {backupBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {backupBusy ? 'Preparing…' : preparedBackup ? 'Download backup' : 'Prepare backup'}
+              </Button>
+              <Button variant="outline" onClick={() => backupInput.current?.click()} disabled={backupBusy} className="gap-2">
+                <FileUp className="h-4 w-4" /> Upload backup
+              </Button>
+              <input
+                ref={backupInput}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                aria-label="Choose a Cipher backup file"
+                onChange={(event) => selectBackupFile(event.target.files?.[0])}
+              />
+            </div>
+            {preparedBackup && <p className="mt-3 text-xs text-primary">Backup ready · {(preparedBackup.blob.size / 1024 / 1024).toFixed(2)} MB</p>}
+          </section>
+
+          <div className="glass rounded-xl p-4 text-xs leading-relaxed text-muted-foreground">
+            <p><span className="font-medium text-foreground">Upload behavior:</span> adds records that are not already present; it never deletes or overwrites current records.</p>
+            <p className="mt-2">Backups include anonymous IDs and visit history. Admin sign-in details and uploaded image files are not included. Keep downloaded backup files private.</p>
+          </div>
+        </TabsContent>
       </Tabs>
     </motion.div>
 
@@ -326,6 +426,29 @@ export default function AdminDashboard() {
       <AlertDialogContent className="glass-strong">
         <AlertDialogHeader><AlertDialogTitle>Delete this post?</AlertDialogTitle><AlertDialogDescription>This permanently removes the post and its comments, reactions, and view history.</AlertDialogDescription></AlertDialogHeader>
         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={(event) => { event.preventDefault(); void deletePost(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete post</AlertDialogAction></AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog open={restoreOpen} onOpenChange={(open) => {
+      if (!open && !backupBusy) {
+        setRestoreOpen(false);
+        setRestoreFile(null);
+        if (backupInput.current) backupInput.current.value = '';
+      }
+    }}>
+      <AlertDialogContent className="glass-strong">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Upload this backup?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {restoreFile?.name} will be checked and missing records added. Existing records will not be changed or removed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={backupBusy}>Cancel</AlertDialogCancel>
+          <AlertDialogAction disabled={backupBusy} onClick={(event) => { event.preventDefault(); void restoreBackup(); }}>
+            {backupBusy ? 'Restoring…' : 'Add backup data'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   </Layout>;
